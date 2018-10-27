@@ -145,7 +145,7 @@ public class SignatureParser {
 			// primitive types
 			type.setType(Types.PRIMITIVE_TYPE, dimensions, getPrimitiveName(this.signature.charAt(this.pos-1)));
 		} else {
-			throw new RuntimeException("Invalid type: " + et + " - " + this.signature.charAt(this.pos));
+			throw new RuntimeException("Invalid type: " + et + " - " + this.signature.charAt(this.pos) + " - " + this.signature);
 		}
 		return type;
 	}
