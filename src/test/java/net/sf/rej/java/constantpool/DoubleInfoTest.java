@@ -164,6 +164,8 @@ public class DoubleInfoTest extends TestCase {
 		ConstantPool cp = new ConstantPool();
 		DoubleInfo di = new DoubleInfo(1.0d, cp);
 		Assert.assertEquals("1.0d", 1.0d, di.getDoubleValue(), 0d);
+		di = new DoubleInfo(1.1d, cp);
+		Assert.assertEquals("1.1d", 1.1d, di.getDoubleValue(), 0d);
 		di = new DoubleInfo(0.0d, cp);
 		Assert.assertEquals("0.0d", 0.0d, di.getDoubleValue(), 0d);
 		di = new DoubleInfo(-1.0d, cp);

@@ -76,23 +76,14 @@ public class DoubleInfo extends ConstantPoolInfo {
 	}
 
 	public double getDoubleValue() {
-		long bits = (highBytes << 32l) + lowBytes;
+		long bits = highBytes;
+		bits <<= 32;
+		bits |= ((long)lowBytes) & 0xFFFFFFFFL;
 		return Double.longBitsToDouble(bits);
-		/* old, 'manual' implementation - has some problems
-		long s = ((bits >> 63) == 0) ? 1 : -1;
-		long e = (int) ((bits >> 52) & 0x7ffL);
-		long m = (e == 0) ? (bits & 0xfffffffffffffL) << 1
-				: (bits & 0xfffffffffffffL) | 0x10000000000000L;
-
-		// value = s x m x 2 pow (1075-e)
-		double value = (s * m) * Math.pow(2, e - 1075);
-		
-		return value;
-		 */
 	}
 
 	public void setDoubleValue(double newValue) {
-		long raw = Double.doubleToRawLongBits(newValue);
+		long raw = Double.doubleToLongBits(newValue);
 		this.lowBytes = (int)(raw & 0xFFFFFFFF);
 		this.highBytes = (int)((raw >> 32) & 0xFFFFFFFF);
 	}
