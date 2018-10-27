@@ -37,7 +37,8 @@ public enum StackElementType {
 	 * A type for object references (including arrays an exceptions).
 	 */
 	REF,
-	
+	NULL, // a special type of ref, guaranteed to be null
+	EXCEPTION, // a special type of ref, always an exception
 	/**
 	 * A type for double values.
 	 */

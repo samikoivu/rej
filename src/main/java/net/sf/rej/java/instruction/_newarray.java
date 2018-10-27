@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.util.ByteSerializer;
 import net.sf.rej.util.ByteToolkit;
@@ -146,6 +147,14 @@ public class _newarray extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("arrayref", StackElementType.REF));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.INT);
+		StringBuilder name = new StringBuilder(_newarray.getTypeName(this.arrayType));
+		stack.push(StackElement.valueOf(name + "[]", StackElementType.REF));
 	}
 
 }

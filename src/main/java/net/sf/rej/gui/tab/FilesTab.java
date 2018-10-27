@@ -44,8 +44,11 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 
+import net.sf.rej.android.BinaryXMLFile;
+import net.sf.rej.android.DexFile;
 import net.sf.rej.files.FileSet;
 import net.sf.rej.files.Project;
+import net.sf.rej.files.RawFile;
 import net.sf.rej.gui.Link;
 import net.sf.rej.gui.SystemFacade;
 import net.sf.rej.gui.editor.CaseInsensitiveMatcher;
@@ -54,12 +57,13 @@ import net.sf.rej.gui.event.EventDispatcher;
 import net.sf.rej.gui.event.EventObserver;
 import net.sf.rej.gui.event.EventType;
 import net.sf.rej.java.ClassFile;
+import net.sf.rej.java.serialized.SerializedStream;
 import net.sf.rej.util.Wrapper;
 
 /**
  * <code>FilesTab</code> is a GUI tab for displaying the contents of a
  * fileset.
- * 
+ *
  * @author Sami Koivu
  */
 
@@ -68,12 +72,12 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 	DefaultTreeModel model = new DefaultTreeModel(root);
 	private Project project;
 	private String openFile;
-	
+
 	private Cursor normalCursor = null;
 	private Cursor busyCursor = new Cursor(Cursor.WAIT_CURSOR);
 
     JTree contentsTree = new JTree(model);
- 
+
     TreeCellRenderer renderer = new DefaultTreeCellRenderer() {
 		@Override
     	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -86,7 +90,7 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
     			if (wrapper.getContent().equals(openFile)) {
     				this.setFont(f.deriveFont(Font.BOLD));
     			} else {
-    				this.setFont(f.deriveFont(Font.PLAIN));    				
+    				this.setFont(f.deriveFont(Font.PLAIN));
     			}
     		} else {
     			if (f != null) {
@@ -120,7 +124,7 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 					}
 				}
 			});
-			
+
 			this.contentsTree.addKeyListener(new KeyAdapter() {
 				@Override
 				public void keyPressed(KeyEvent e) {
@@ -150,6 +154,8 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 			this.project = event.getProject();
 			break;
 		case CLASS_OPEN:
+		case SERIALIZED_OPEN:
+		case RAW_OPEN:
 			this.openFile = event.getFile();
 			repaint();
 			break;
@@ -182,14 +188,14 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 				this.statusLabel.setText("Selected file: " + file);
 			}
 		}
-		
-		if (event.getType() == EventType.PROJECT_UPDATE && this.project != null) {	
+
+		if (event.getType() == EventType.PROJECT_UPDATE && this.project != null) {
 			this.fileSet = this.project.getFileSet();
 			List<String> list = this.fileSet.getContentsList();
-			
+
 			this.root = new DefaultMutableTreeNode(this.fileSet.getName());
 			this.model.setRoot(this.root);
-			
+
 			// get a list of all the packages in the fileset
 			Set<String> pkgs = new TreeSet<String>();
 			for (String contentFile : list) {
@@ -199,11 +205,11 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 				} else {
 					pkgs.add(contentFile.substring(0, index));
 				}
-				
+
 			}
-			
+
 			// associate each package name with a tree node
-			Map<String, DefaultMutableTreeNode> map = new HashMap<String, DefaultMutableTreeNode>(); 
+			Map<String, DefaultMutableTreeNode> map = new HashMap<String, DefaultMutableTreeNode>();
 			for (String pkg : pkgs) {
 				DefaultMutableTreeNode node = new DefaultMutableTreeNode(pkg);
 				root.add(node);
@@ -224,16 +230,16 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 				Wrapper<String> wrapper = new Wrapper<String>();
 				wrapper.setContent(contentFile);
 				if (index == -1) {
-					wrapper.setDisplay(contentFile);					
+					wrapper.setDisplay(contentFile);
 				} else {
 					wrapper.setDisplay(contentFile.substring(pkg.length()+1));
 				}
 				DefaultMutableTreeNode fileNode = new DefaultMutableTreeNode(wrapper);
 				pkgNode.add(fileNode);
 			}
-			
+
 			// expand the root
-			this.contentsTree.expandPath(this.contentsTree.getPathForRow(0));				
+			this.contentsTree.expandPath(this.contentsTree.getPathForRow(0));
 			if (pkgs.size() == 1) {
 				// only one package, expand it
 				this.contentsTree.expandPath(this.contentsTree.getPathForRow(1));
@@ -241,7 +247,7 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 		}
 
 	}
-	
+
 	public void selectFile() {
 		try {
 			this.normalCursor = getCursor();
@@ -256,16 +262,44 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 				Wrapper<String> wrapper = (Wrapper)node.getUserObject();
 				String file = wrapper.getContent();
 				try {
-					Event event = new Event(EventType.CLASS_OPEN);
-					ClassFile cf = this.project.getClassFile(file);
-					event.setClassFile(cf);
-					event.setFile(file);
-					this.dispatcher.notifyObservers(event);
+					Object obj = this.project.getFile(file);
+					if (obj instanceof ClassFile) {
+						ClassFile cf = (ClassFile) obj;
+						Event event = new Event(EventType.CLASS_OPEN);
+						event.setClassFile(cf);
+						event.setFile(file);
+						this.dispatcher.notifyObservers(event);
+					} else if (obj instanceof SerializedStream) {
+						SerializedStream ss = (SerializedStream) obj;
+						Event event = new Event(EventType.SERIALIZED_OPEN);
+						event.setSerialized(ss);
+						event.setFile(file);
+						this.dispatcher.notifyObservers(event);
+					} else if (obj instanceof BinaryXMLFile) {
+						BinaryXMLFile xml = (BinaryXMLFile) obj;
+						Event event = new Event(EventType.BINARY_XML_OPEN);
+						event.setBinaryXML(xml);
+						event.setFile(file);
+						this.dispatcher.notifyObservers(event);
+						System.out.println("Notified dispatcher of xml binary file open event");
+					} else if (obj instanceof DexFile) {
+						DexFile dex = (DexFile) obj;
+						Event event = new Event(EventType.DEX_OPEN);
+						event.setDex(dex);
+						event.setFile(file);
+						this.dispatcher.notifyObservers(event);
+					} else if (obj instanceof RawFile) {
+						RawFile raw = (RawFile) obj;
+						Event event = new Event(EventType.RAW_OPEN);
+						event.setRaw(raw);
+						event.setFile(file);
+						this.dispatcher.notifyObservers(event);
+					}
 				} catch(Exception ex) {
 					SystemFacade.getInstance().handleException(ex);
 					this.dispatcher.notifyObservers(new Event(EventType.CLASS_PARSE_ERROR));
 				}
-			}	
+			}
 		} finally {
 			setCursor(this.normalCursor);
 		}
@@ -304,9 +338,9 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 					Wrapper<String> wrapper = (Wrapper<String>)obj;
 					fileList.add(wrapper.getContent());
 				}
-				
+
 			}
-			
+
 			if (fileList.size() > 0) {
 				SystemFacade.getInstance().removeFile(fileList);
 			}
@@ -332,9 +366,7 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 				Wrapper<String> wrapper = (Wrapper<String>) obj;
 				String filename = wrapper.getContent();
 				if (this.lastSearch.matches(filename)) {
-					Object[] path = { FilesTab.this.root, node.getParent(),
-							node };
-					TreePath tp = new TreePath(path);
+					TreePath tp = new TreePath(node.getPath());
 					contentsTree.setSelectionPath(tp);
 					contentsTree.startEditingAtPath(tp);
 					SystemFacade.getInstance().setStatus("Found '" + query + "'.");
@@ -344,7 +376,7 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 		}
 
 		this.lastSearch = null;
-		SystemFacade.getInstance().setStatus("No occurances of '" + query + "' found.");		
+		SystemFacade.getInstance().setStatus("No occurances of '" + query + "' found.");
 	}
 
 	public void findNext() {
@@ -367,8 +399,7 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 					Wrapper<String> wrapper = (Wrapper<String>)obj;
 					String filename = wrapper.getContent();
 					if (this.lastSearch.matches(filename)) {
-						Object[] path = {this.root, node.getParent(), node};
-						TreePath tp = new TreePath(path);
+						TreePath tp = new TreePath(node.getPath());
 						this.contentsTree.setSelectionPath(tp);
 						this.contentsTree.startEditingAtPath(tp);
 						SystemFacade.getInstance().setStatus("Found '" + this.lastQueryString + "'.");
@@ -376,7 +407,7 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 					}
 				}
 			}
-			SystemFacade.getInstance().setStatus("No more occurances of '" + this.lastQueryString + "' found.");		
+			SystemFacade.getInstance().setStatus("No more occurances of '" + this.lastQueryString + "' found.");
 		}
 	}
 
@@ -385,7 +416,7 @@ public class FilesTab extends JPanel implements Tabbable, EventObserver  {
 
 	public void leavingTab() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	public void enteringTab() {

@@ -66,19 +66,19 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	private JScrollPane stackFrameScrollPane = null;
 	private JList threadList = null;
 	private JList stackFrameList = null;
-	
+
 	private DefaultListModel threadModel;
 	private DefaultListModel stackModel;
 	private VirtualMachine vm = null;
-	
+
 	EventDispatcher dispatcher;  //  @jve:decl-index=0:
-	
+
 	private final Action debugResume = new AbstractAction("Resume") {
 		public void actionPerformed(ActionEvent e) {
 			dispatcher.notifyObservers(new Event(EventType.DEBUG_RESUME_REQUESTED));
 		}
 	};
-	
+
 	private final Action debugSuspend = new AbstractAction("Suspend") {
 		public void actionPerformed(ActionEvent e) {
 			dispatcher.notifyObservers(new Event(EventType.DEBUG_SUSPEND_REQUESTED));
@@ -148,9 +148,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes suspendButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes suspendButton
+	 *
+	 * @return javax.swing.JButton
 	 */
 	private JButton getSuspendButton() {
 		if (suspendButton == null) {
@@ -160,9 +160,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes resumeButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes resumeButton
+	 *
+	 * @return javax.swing.JButton
 	 */
 	private JButton getResumeButton() {
 		if (resumeButton == null) {
@@ -172,9 +172,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes statusPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes statusPanel
+	 *
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getStatusPanel() {
 		if (statusPanel == null) {
@@ -188,9 +188,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes stepPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes stepPanel
+	 *
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getStepPanel() {
 		if (stepPanel == null) {
@@ -214,9 +214,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes stepOverButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes stepOverButton
+	 *
+	 * @return javax.swing.JButton
 	 */
 	private JButton getStepOverButton() {
 		if (stepOverButton == null) {
@@ -227,9 +227,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes stepIntoButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes stepIntoButton
+	 *
+	 * @return javax.swing.JButton
 	 */
 	private JButton getStepIntoButton() {
 		if (stepIntoButton == null) {
@@ -240,9 +240,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes stepOutButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes stepOutButton
+	 *
+	 * @return javax.swing.JButton
 	 */
 	private JButton getStepOutButton() {
 		if (stepOutButton == null) {
@@ -253,9 +253,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes threadsPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes threadsPanel
+	 *
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getThreadsPanel() {
 		if (threadsPanel == null) {
@@ -268,9 +268,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes stackFramesPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes stackFramesPanel
+	 *
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getStackFramesPanel() {
 		if (stackFramesPanel == null) {
@@ -283,9 +283,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes threadScrollPane	
-	 * 	
-	 * @return javax.swing.JScrollPane	
+	 * This method initializes threadScrollPane
+	 *
+	 * @return javax.swing.JScrollPane
 	 */
 	private JScrollPane getThreadScrollPane() {
 		if (threadScrollPane == null) {
@@ -296,9 +296,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes stackFrameScrollPane	
-	 * 	
-	 * @return javax.swing.JScrollPane	
+	 * This method initializes stackFrameScrollPane
+	 *
+	 * @return javax.swing.JScrollPane
 	 */
 	private JScrollPane getStackFrameScrollPane() {
 		if (stackFrameScrollPane == null) {
@@ -309,9 +309,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes threadList	
-	 * 	
-	 * @return javax.swing.JList	
+	 * This method initializes threadList
+	 *
+	 * @return javax.swing.JList
 	 */
 	private JList getThreadList() {
 		if (threadList == null) {
@@ -320,7 +320,7 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 			this.threadList.addListSelectionListener(new ListSelectionListener() {
 				public void valueChanged(ListSelectionEvent e) {
 					if (e.getValueIsAdjusting()) return;
-					
+
 					Object item = threadList.getSelectedValue();
 					if (item != null && !item.equals("")) {
 						@SuppressWarnings("unchecked")
@@ -336,9 +336,9 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 	}
 
 	/**
-	 * This method initializes stackFrameList	
-	 * 	
-	 * @return javax.swing.JList	
+	 * This method initializes stackFrameList
+	 *
+	 * @return javax.swing.JList
 	 */
 	private JList getStackFrameList() {
 		if (stackFrameList == null) {
@@ -347,7 +347,7 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 			this.stackFrameList.addListSelectionListener(new ListSelectionListener() {
 				public void valueChanged(ListSelectionEvent e) {
 					if (e.getValueIsAdjusting()) return;
-					
+
 					Object item = stackFrameList.getSelectedValue();
 					if (item != null && !item.equals("")) {
 						@SuppressWarnings("unchecked")
@@ -402,11 +402,13 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 		case DEBUG_STEP_OVER_REQUESTED:
 		case DEBUG_RESUME_REQUESTED:
 		case DEBUG_SUSPEND_REQUESTED:
+		case SERIALIZED_OPEN:
+		case RAW_OPEN:
 			// do nothing
 			break;
 		}
 	}
-	
+
 	private void setStatusAsRunning() {
 		this.statusLabel.setText("Running");
 		this.statusLabel.setForeground(Color.GREEN.darker());
@@ -416,7 +418,7 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 		this.stepOverButton.setEnabled(false);
 		this.suspendButton.setEnabled(true);
 	}
-	
+
 	private void setStatusAsSuspended() {
 		this.statusLabel.setText("Suspended");
 		this.statusLabel.setForeground(Color.RED.darker());
@@ -426,7 +428,7 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 		this.stepOverButton.setEnabled(true);
 		this.suspendButton.setEnabled(false);
 	}
-	
+
 	private void updateThreadList() {
 		this.threadModel.removeAllElements();
 		for (ThreadReference thread : this.vm.allThreads()) {
@@ -436,7 +438,7 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 			this.threadModel.addElement(wrapper);
 		}
 	}
-	
+
 	private void updateStackFrameList(ThreadReference thread) {
 		this.stackModel.removeAllElements();
 		try {
@@ -450,7 +452,7 @@ public class DebugControlPanel extends JPanel implements EventObserver {
 			ite.printStackTrace();
 		}
 	}
-	
+
 	private void setSelectedThread(ThreadReference thread) {
 		for (int i=0; i < this.threadModel.size(); i++) {
 			@SuppressWarnings("unchecked")

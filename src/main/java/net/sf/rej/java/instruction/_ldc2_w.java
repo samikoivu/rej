@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.java.constantpool.ConstantPoolInfo;
 import net.sf.rej.java.constantpool.DoubleInfo;
@@ -105,6 +106,19 @@ public class _ldc2_w extends Instruction {
 			throw new AssertionError("ldc2_w points to an invalid item on the constant pool: " + cpi.getClass());
 		}
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		ConstantPoolInfo cpi = dc.getConstantPool().get(this.index);
+		if (cpi instanceof DoubleInfo) {
+			stack.push(StackElement.valueOf(StackElementType.DOUBLE));
+		} else if (cpi instanceof LongInfo) {
+			stack.push(StackElement.valueOf(StackElementType.LONG));
+		} else {
+			throw new AssertionError("ldc2_w points to an invalid item on the constant pool: " + cpi.getClass());
+		}
 	}
 
 }

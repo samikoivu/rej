@@ -24,10 +24,17 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.sf.rej.android.Android;
+import net.sf.rej.android.BinaryXMLFile;
+import net.sf.rej.android.DexFile;
+import net.sf.rej.gui.FileObject;
 import net.sf.rej.gui.UndoManager;
 import net.sf.rej.java.ClassFile;
 import net.sf.rej.java.ClassParsingException;
+import net.sf.rej.java.Deserializer;
 import net.sf.rej.java.Disassembler;
+import net.sf.rej.java.serialized.SerializedStream;
+import net.sf.rej.util.ByteToolkit;
 /**
  * <code>Project</code> class is for modeling a project - that is, a file or a set of files open at a time.
  * @author Sami Koivu
@@ -86,16 +93,16 @@ public class Project implements Modifications {
         return um;
     }
 
-    public void setClassFileMofidied(boolean modified, String filename, ClassFile cf) {
+    public void setFileModified(boolean modified, String filename, FileObject fileObject) {
         if(modified) {
-            // mark file as modified and store the classfile
+            // mark file as modified and store the file object
             this.modified.add(filename);
-            this.cache.put(filename, cf);
+            this.cache.put(filename, fileObject);
         } else {
-            // mark file as not modified and store a soft reference of the classfile
-            // this is memory sensitive and will be released by the JVM is memory runs low
+            // mark file as not modified and store a soft reference of the fileobject
+            // this is memory sensitive and will be released by the JVM if memory runs low
             this.modified.remove(filename);
-            this.cache.put(filename, new SoftReference<ClassFile>(cf));
+            this.cache.put(filename, new SoftReference<FileObject>(fileObject));
         }
     }
 
@@ -107,27 +114,56 @@ public class Project implements Modifications {
         return this.modified.contains(filename);
     }
 
-    public ClassFile getClassFile(String filename) throws IOException, ClassParsingException {
+    private static final byte[] classMagic = { (byte) 0xCa, (byte) 0xfe, (byte) 0xBa, (byte) 0xbe};
+
+    private static final byte[] serializedMagic = { (byte) 0xac, (byte) 0xed};
+
+    private static final byte[] binaryXMLMagic = { 0x03, 0x00, 0x08, 0x00};
+
+    private static final byte[] dexMagic = { 'd', 'e', 'x', 0x0a, '0', '3', '5', 0x00};
+
+    
+    public FileObject getFile(String filename) throws IOException, ClassParsingException {
         if (this.cache.containsKey(filename)) {
             // file is already open and in the cache
             Object value = this.cache.get(filename);
-            if(value instanceof ClassFile) {
-                return (ClassFile)value;
+            if(value instanceof FileObject) {
+                return (FileObject) value;
             } else {
-                ClassFile cf = (ClassFile)((SoftReference)value).get();
-                if(cf != null) {
-                    return cf;
+                FileObject fileObj = (FileObject)((SoftReference)value).get();
+                if(fileObj != null) {
+                    return fileObj;
                 } // otherwise just load it from the i/o again
             }
         }
 
         byte[] data = this.fileset.getData(filename);
-        try {
-            ClassFile cf = Disassembler.readClass(data);
-            this.cache.put(filename, new SoftReference<ClassFile>(cf));
-            return cf;
-        } catch (Exception e) {
-            throw new ClassParsingException("Error parsing class file " + this.file + " : " + e.getMessage(), e);
+
+        if (ByteToolkit.areEqual(classMagic, data, classMagic.length)) {
+        	try {
+        		ClassFile cf = Disassembler.readClass(data);
+        		this.cache.put(filename, new SoftReference<FileObject>(cf));
+        		return cf;
+        	} catch (Exception e) {
+        		throw new ClassParsingException("Error parsing class file " + this.file + " : " + e.getMessage(), e);
+        	}
+        } else if (ByteToolkit.areEqual(dexMagic, data, dexMagic.length)) {
+        	Android android = new Android();
+        	DexFile dex = android.readDEX(data);
+    		this.cache.put(filename, new SoftReference<FileObject>(dex));
+        	return dex;
+        } else if (ByteToolkit.areEqual(binaryXMLMagic, data, binaryXMLMagic.length)) {
+        	Android android = new Android();
+        	BinaryXMLFile xml = android.readXML(data);
+    		this.cache.put(filename, new SoftReference<FileObject>(xml));
+        	return xml;
+        } else if (ByteToolkit.areEqual(serializedMagic, data, serializedMagic.length)) {
+        	Deserializer deserializer = new Deserializer();
+        	SerializedStream ss = deserializer.readSerialized(data);
+        	this.cache.put(filename, new SoftReference<FileObject>(ss));
+        	return ss;
+        } else {
+        	return new RawFile(data);
         }
     }
 
@@ -162,10 +198,10 @@ public class Project implements Modifications {
 
     public byte[] getData(String filename) throws IOException {
         try {
-            return getClassFile(filename).getData();
+            return getFile(filename).getData();
         } catch(ClassParsingException cpe) {
             cpe.printStackTrace();
-            throw new IOException("Class file parsing failed where no parsing was supposed to happen; " + cpe.getMessage());
+            throw new IOException("File parsing failed where no parsing was supposed to happen; " + cpe.getMessage());
         }
     }
 

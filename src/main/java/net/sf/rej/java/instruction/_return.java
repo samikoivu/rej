@@ -21,7 +21,7 @@ package net.sf.rej.java.instruction;
  * 
  * @author Sami Koivu
  */
-public class _return extends Instruction {
+public class _return extends Instruction implements Returnable {
 
 	public static final int OPCODE = 0xb1;
 

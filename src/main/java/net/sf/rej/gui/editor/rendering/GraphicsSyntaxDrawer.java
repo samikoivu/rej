@@ -23,12 +23,13 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
 
 
 /**
  * Class used to draw syntax highlighted text into a graphics
  * object
- * 
+ *
  * @author Sami Koivu
  */
 
@@ -56,7 +57,7 @@ public class GraphicsSyntaxDrawer implements JavaBytecodeSyntaxDrawer {
         this.yPos = d.height - 4;
         this.fm = g.getFontMetrics(BOLD);
     }
-    
+
     public void drawIndent() {
     	drawDefault(INDENT);
     }
@@ -146,6 +147,29 @@ public class GraphicsSyntaxDrawer implements JavaBytecodeSyntaxDrawer {
 
 	public void setExecutionBackground() {
 		// do nothing
+	}
+
+	public void drawImplementedClue() {
+		Graphics2D g2 = (Graphics2D)this.g;
+		GeneralPath path = new GeneralPath();
+		path.moveTo(2, this.yPos - 3);
+		path.lineTo(8, this.yPos - 3);
+		path.lineTo(5, this.yPos - 6);
+		path.lineTo(2, this.yPos - 3);
+		g2.setColor(Color.BLACK);
+		g2.draw(path);
+	}
+
+	public void drawOverriddenClue() {
+		Graphics2D g2 = (Graphics2D)this.g;
+		GeneralPath path = new GeneralPath();
+		path.moveTo(2, this.yPos - 3);
+		path.lineTo(8, this.yPos - 3);
+		path.lineTo(5, this.yPos - 6);
+		g2.setColor(Color.GREEN.darker());
+		g2.fill(path);
+		g2.setColor(Color.BLACK);
+		g2.draw(path);
 	}
 
 }

@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Compare float.
@@ -90,6 +91,14 @@ public class _fcmpl extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("result", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.FLOAT);
+		assertType(stack.pop(), StackElementType.FLOAT);
+		stack.push(StackElement.valueOf(StackElementType.INT));
 	}
 
 }

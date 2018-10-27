@@ -16,6 +16,7 @@
  */
 package net.sf.rej.gui;
 
+import net.sf.rej.files.ClassLocator;
 import net.sf.rej.files.Project;
 import net.sf.rej.gui.tab.Tab;
 import net.sf.rej.java.Field;
@@ -40,9 +41,11 @@ public class Link {
 
     private String text = null;
     private Project project = null;
-    
+
+    private ClassLocator classLocator = null;
+
     private String file = null;
-    
+
     private Tab tab = null;
     private int anchor = ANCHOR_UNDEFINED;
     private Field field = null;
@@ -52,7 +55,7 @@ public class Link {
 
     public Link() {
     }
-    
+
     @Override
 	public String toString() {
         return this.text;
@@ -93,7 +96,7 @@ public class Link {
     public String getText() {
         return this.text;
     }
-        
+
     public String dump() {
     	StringBuilder sb = new StringBuilder();
     	sb.append("text=" + this.text);
@@ -142,5 +145,13 @@ public class Link {
 
 	public void setText(String text) {
 		this.text = text;
+	}
+
+	public void setClassLocator(ClassLocator classLocator) {
+		this.classLocator = classLocator;
+	}
+
+	public ClassLocator getClassLocator() {
+		return this.classLocator;
 	}
 }

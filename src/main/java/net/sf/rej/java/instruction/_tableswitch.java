@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import net.sf.rej.util.ByteArrayByteParser;
 import net.sf.rej.util.ByteParser;
@@ -194,6 +195,12 @@ public class _tableswitch extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("index", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.INT);
 	}
 
 }

@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.util.ByteSerializer;
 import net.sf.rej.util.ByteToolkit;
@@ -96,6 +97,12 @@ public class _bipush extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("value", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		stack.push(StackElement.valueOf(StackElementType.INT));
 	}
 
 }

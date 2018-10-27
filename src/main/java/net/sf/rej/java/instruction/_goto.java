@@ -27,7 +27,7 @@ import net.sf.rej.util.ByteToolkit;
  * 
  * @author Sami Koivu
  */
-public class _goto extends Instruction {
+public class _goto extends Instruction implements Branchable {
 
 	public static final int OPCODE = 0xa7;
 

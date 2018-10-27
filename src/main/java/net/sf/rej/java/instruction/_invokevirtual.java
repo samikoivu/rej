@@ -18,9 +18,11 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.java.Descriptor;
 import net.sf.rej.java.JavaType;
+import net.sf.rej.java.RandomAccessArray;
 import net.sf.rej.java.constantpool.RefInfo;
 import net.sf.rej.util.ByteSerializer;
 import net.sf.rej.util.ByteToolkit;
@@ -39,6 +41,8 @@ public class _invokevirtual extends Instruction {
 	private static final int SIZE = 3;
 
 	private int index = 0;
+	
+	private StackElement calledObject;
 
 	public _invokevirtual() {
 	}
@@ -135,7 +139,7 @@ public class _invokevirtual extends Instruction {
 		Descriptor desc = ri.getDescriptor();
 		JavaType jt = desc.getReturn();
 		if (jt.getDimensionCount() > 0 || (!jt.isPrimitive())) {
-			// array or primitive are both refs
+			// array or non-primitive are both refs
 			elements.add(new StackElement("result", StackElementType.REF));
 		} else {
 			// primitive non-array
@@ -153,6 +157,50 @@ public class _invokevirtual extends Instruction {
 			}
 		}
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		
+		RefInfo ri = (RefInfo) dc.getConstantPool().get(this.index);
+		Descriptor desc = ri.getDescriptor();
+
+		// pop arguments
+		for (JavaType jt : desc.getParamList()) {
+			// TODO: assert types (remember to reverse order, last param is at the top of the stack)
+			stack.pop(); // pop and discard arg
+		}
+
+		this.calledObject = stack.pop();
+		assertType(this.calledObject, StackElementType.REF);
+
+		// push return type
+		JavaType jt = desc.getReturn();
+		if (jt.getDimensionCount() > 0 || (!jt.isPrimitive())) {
+			// array or non-primitive are both refs
+			stack.push(StackElement.valueOf(jt.toString(), StackElementType.REF));
+		} else {
+			// primitive non-array
+			if (jt.getType().equals("long")) {
+				stack.push(StackElement.valueOf(StackElementType.LONG));
+			} else if (jt.getType().equals("float")) {
+				stack.push(StackElement.valueOf(StackElementType.FLOAT));
+			} else if (jt.getType().equals("double")) {
+				stack.push(StackElement.valueOf(StackElementType.DOUBLE));
+			} else if (jt.getType().equals("void")) {
+				// void, nothing is put on stack
+			} else {
+				// boolean, byte, short, char and int are all of type int
+				stack.push(StackElement.valueOf(jt.getType(), StackElementType.INT));
+			}
+		}
+
+	}
+
+	public boolean callThis() {
+		return false; // FIXME: is there some good way to do this
 	}
 
 }

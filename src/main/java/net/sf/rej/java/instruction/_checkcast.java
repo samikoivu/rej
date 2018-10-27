@@ -109,4 +109,5 @@ public class _checkcast extends Instruction {
 		return elements;
 	}
 
+	// stackFlow: do nothing, as the same object is popped and pushed
 }

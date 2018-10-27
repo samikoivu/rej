@@ -18,6 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+
+import net.sf.rej.java.RandomAccessArray;
 
 /**
  * Boolean AND long.
@@ -90,6 +93,15 @@ public class _land extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("result", StackElementType.LONG));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		assertType(stack.pop(), StackElementType.LONG);
+		assertType(stack.pop(), StackElementType.LONG);
+		stack.push(StackElement.valueOf(StackElementType.LONG));
 	}
 
 }

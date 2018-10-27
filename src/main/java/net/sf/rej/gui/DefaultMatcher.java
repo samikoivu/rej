@@ -57,7 +57,7 @@ public abstract class DefaultMatcher extends AbstractIteratorAgent {
         	link.setTab(Tab.EDITOR);
             addResult(link);
         }
-        
+
         String superClassName = cf.getSuperClassName();
         if (superClassName != null && matches(superClassName)) {
         	Link link = new Link();
@@ -68,6 +68,7 @@ public abstract class DefaultMatcher extends AbstractIteratorAgent {
         	link.setTab(Tab.EDITOR);
             addResult(link);
         }
+        
     }
 
     public void processFile(String filename) {
@@ -102,7 +103,7 @@ public abstract class DefaultMatcher extends AbstractIteratorAgent {
     public void processMethod(IterationContext ic, Method method) {
         if (matches(method.getSignatureLine())) {
         	Link link = new Link();
-        	link.setText("Method signature : " + ic.getCf().getFullClassName() + "." + method.getName());
+        	link.setText(method.getData().length + " Method signature : " + ic.getCf().getFullClassName() + "." + method.getName());
         	link.setAnchor(Link.ANCHOR_METHOD_DEF);
         	link.setProject(ic.getProject());
         	link.setFile(ic.getFilename());
@@ -130,7 +131,7 @@ public abstract class DefaultMatcher extends AbstractIteratorAgent {
         String instructionLine = instruction.getMnemonic() + " " + instruction.getParameters().getString(ic.getDc());
         if (matches(instructionLine)) {
         	Link link = new Link();
-        	link.setText("Instruction : " + ic.getCf().getFullClassName() + "." + ic.getMethod().getName() + " / " + instructionLine);
+        	link.setText(ic.getDc().getPosition()  + " " + ic.getCf().getFullClassName() + "." + ic.getMethod().getName() + " / " + instructionLine);
         	link.setAnchor(Link.ANCHOR_METHOD_CODE);
         	link.setProject(ic.getProject());
         	link.setFile(ic.getFilename());
@@ -138,8 +139,8 @@ public abstract class DefaultMatcher extends AbstractIteratorAgent {
         	link.setMethod(ic.getMethod());
         	link.setPosition(ic.getDc().getPosition());
             addResult(link);
-
         }
+        
     }
 
     public void finished(final IterationContext ic, final int totalCount) {
@@ -147,7 +148,7 @@ public abstract class DefaultMatcher extends AbstractIteratorAgent {
     		public void run() {
     	        SystemFacade.getInstance().setStatus("Search done. Searched in " + totalCount + " files. Found " + DefaultMatcher.this.resultCount + " results.");
     		}
-    	});
+    	});    	
     }
 
     public void processAttribute(IterationContext ic, Attribute attr) {
@@ -164,7 +165,7 @@ public abstract class DefaultMatcher extends AbstractIteratorAgent {
     public void processException(final Exception ex) {
     	SwingUtilities.invokeLater(new Runnable() {
     		public void run() {
-    			SystemFacade.getInstance().handleException(ex);    			
+    			SystemFacade.getInstance().handleException(ex);
     		}
     	});
     }

@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Duplicate top operand stack word.
@@ -90,6 +91,14 @@ public class _dup extends Instruction {
 		elements.add(new StackElement("value", StackElementType.ANY));
 		elements.add(new StackElement("value", StackElementType.ANY));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		StackElement top = stack.pop();
+		stack.push(top);
+		stack.push(top);
 	}
 
 }

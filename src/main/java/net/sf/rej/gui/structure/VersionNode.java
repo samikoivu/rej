@@ -29,21 +29,10 @@ import net.sf.rej.gui.action.ModifyClassVersionAction;
 import net.sf.rej.gui.dialog.ClassVersionDialog;
 import net.sf.rej.java.ClassFile;
 
-public class VersionNode extends StructureNode {
+public class VersionNode {
 
 	private ClassFile cf;
 	
-	private Action modifyAction = new AbstractAction("Change Version..") {
-		public void actionPerformed(ActionEvent e) {
-			ClassVersionDialog dlg = new ClassVersionDialog(MainWindow.getInstance());
-			dlg.invoke(cf.getMajorVersion(), cf.getMinorVersion());
-			if (!dlg.wasCancelled()) {
-				SystemFacade.getInstance().performAction(new ModifyClassVersionAction(cf, dlg.getVersion()));
-			}
-		}
-	};
-
-
 	public VersionNode(ClassFile cf) {
 		this.cf = cf;
 	}
@@ -54,11 +43,4 @@ public class VersionNode extends StructureNode {
 				+ this.cf.getMinorVersion() + " (Java " + this.cf.getJavaVersionCompabilityString() + ")";
 	}
 	
-	@Override
-	public JPopupMenu getContextMenu() {
-		JPopupMenu contextMenu = new JPopupMenu(); 
-		contextMenu.add(new JMenuItem(this.modifyAction));
-		return contextMenu;
-	}
-
 }

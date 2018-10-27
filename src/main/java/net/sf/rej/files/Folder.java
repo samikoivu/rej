@@ -47,11 +47,6 @@ public class Folder extends FileSet {
         // empty constructor
     }
 
-    @Override
-    public long getLength(String file) {
-        return getTarget(file).length();
-    }
-
     public File getTarget(String file) {
         return new File(this.f, file);
     }

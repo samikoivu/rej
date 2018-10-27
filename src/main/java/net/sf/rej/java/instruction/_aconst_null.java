@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Push null.
@@ -86,4 +87,9 @@ public class _aconst_null extends Instruction {
 		return elements;
 	}
 
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		stack.push(StackElement.NULL);
+	}
 }

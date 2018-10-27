@@ -169,7 +169,7 @@ public class MethodChooseDialog extends JDialog {
                 // TODO: let user type his own class name?
             } else if (obj instanceof ClassLocator) {
                 ClassLocator cl = (ClassLocator) obj;
-                cf = SystemFacade.getInstance().getClassFile(cl);
+                cf = (ClassFile) SystemFacade.getInstance().getClassFile(cl);
             }
 
             // cf will be null if referenced class is not in project classpath

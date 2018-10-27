@@ -19,7 +19,7 @@ package net.sf.rej.gui.structure;
 import net.sf.rej.java.ClassFile;
 
 /* TODO: Show constant pool entries as children? */
-public class ConstantPoolNode extends StructureNode {
+public class ConstantPoolNode {
 
     public ConstantPoolNode(ClassFile cf) {
     }

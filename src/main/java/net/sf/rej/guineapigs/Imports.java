@@ -22,6 +22,12 @@ import java.io.IOException;
 import java.security.AllPermission;
 import java.util.ArrayList;
 
+/**
+ * A Guineapig to test the Import handling.
+ *
+ * @version $Revision: 1.4 $
+ * @author Sami Koivu
+ */
 public abstract class Imports {
 
 	public Imports() {
@@ -30,9 +36,9 @@ public abstract class Imports {
 		System.out.println(date1 + " - " + date2);
 		new IOException();
 	}
-	
+
 	public abstract ArrayList typeInReturnType();
-	
+
 	public abstract void typesInParameters(Color color, Dimension dimension, AllPermission ap);
 
 }

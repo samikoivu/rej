@@ -45,12 +45,13 @@ public class Method implements DescriptorEnabled {
 
     private Attributes attributes;
 
-    protected Method(ByteParser parser, ConstantPool pool) {
+    protected Method(ByteParser parser, ConstantPool pool, ClassContext cc) {
         this.pool = pool;
         this.accessFlags = parser.getShortAsInt();
         this.nameIndex = parser.getShortAsInt();
         this.descriptorIndex = parser.getShortAsInt();
-        this.attributes = new Attributes(parser, this.pool);
+//        System.err.println("Method " + this.getName());
+        this.attributes = new Attributes(parser, this.pool, cc, accessFlags, descriptorIndex);
     }
 
     protected Method(ConstantPool pool) {
@@ -104,13 +105,13 @@ public class Method implements DescriptorEnabled {
     }
 
     public static enum OffsetTag {ACCESS_FLAGS, METHOD_NAME, METHOD_DESCRIPTOR, ATTRIBUTES}
-    
+
     /**
      * Returns a map of offsets of each significant element of this method.
      * The offsets returned by this method are only valid until this
      * object is modified. The keys in the map are
-     * of type <code>OffsetTag</code>, <code>Attribute</code>. 
-     * 
+     * of type <code>OffsetTag</code>, <code>Attribute</code>.
+     *
      * @return a map of element offsets in class file data.
      */
     public Map<Object, Range> getOffsetMap() {
@@ -124,7 +125,7 @@ public class Method implements DescriptorEnabled {
     	offset += 2;
     	map.put(OffsetTag.ATTRIBUTES, new Range(offset, this.attributes.getData().length));
     	// each attribute
-    	
+
     	map.putAll(this.attributes.getOffsetMap(offset));
 
     	return map;
@@ -162,7 +163,7 @@ public class Method implements DescriptorEnabled {
         UTF8Info info = (UTF8Info) this.pool.get(this.descriptorIndex);
         return new Descriptor(info.getValue());
     }
-    
+
     public String getSignatureLine() {
         return getSignatureLine(null);
     }
@@ -221,9 +222,14 @@ public class Method implements DescriptorEnabled {
             return ea.getExceptions();
         }
     }
-    
+
     public boolean isDeprecated() {
     	return this.attributes.getDeprecatedAttribute() != null;
     }
+
+	public boolean signatureMatches(Method method) {
+		return this.getName().equals(method.getName())
+		    && this.getDescriptor().equals(method.getDescriptor());
+	}
 
 }

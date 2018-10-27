@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Get length of array.
@@ -89,6 +90,13 @@ public class _arraylength extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("length", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.REF); // array ref
+		stack.push(StackElement.valueOf(StackElementType.INT)); // length
 	}
 
 }

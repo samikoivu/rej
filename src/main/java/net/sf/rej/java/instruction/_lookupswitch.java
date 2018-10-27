@@ -17,18 +17,20 @@
 package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Stack;
 
+import net.sf.rej.java.RandomAccessArray;
 import net.sf.rej.util.ByteArrayByteParser;
 import net.sf.rej.util.ByteParser;
 import net.sf.rej.util.ByteSerializer;
 
 /**
  * Access jump table by key match and jump.
- * 
+ *
  * @author Sami Koivu
  */
 public class _lookupswitch extends Instruction {
@@ -137,9 +139,13 @@ public class _lookupswitch extends Instruction {
 		ser.addInt(this.def.getPosition() - dc.getPosition());
 		ser.addInt(this.offsets.size());
 
-		for (Entry<Integer, Label> entry : this.offsets.entrySet()) {
-			ser.addInt(entry.getKey());
-			ser.addInt(entry.getValue().getPosition() - dc.getPosition());
+		// sort the offsets by key
+		List<Integer> keys = new ArrayList<Integer>();
+		keys.addAll(this.offsets.keySet());
+		Collections.sort(keys);
+		for (Integer key : keys) {
+			ser.addInt(key);
+			ser.addInt(this.offsets.get(key).getPosition() - dc.getPosition());
 		}
 
 		return ser.getBytes();
@@ -183,6 +189,13 @@ public class _lookupswitch extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("key", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		assertType(stack.pop(), StackElementType.INT);
 	}
 
 }

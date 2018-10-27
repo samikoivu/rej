@@ -16,9 +16,13 @@
  */
 package net.sf.rej.java.attribute;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import net.sf.rej.java.Code;
 import net.sf.rej.java.constantpool.ConstantPool;
@@ -79,10 +83,21 @@ public class LineNumberTableAttribute extends Attribute {
 
     	ByteSerializer ser = new ByteSerializer(true);
         ser.addShort(this.mappings.size());
-        for (Entry<Integer, Integer> entry : this.mappings.entrySet()) {
-            ser.addShort(entry.getKey());
-            ser.addShort(entry.getValue());
+        
+        List<Integer> keys = new ArrayList<Integer>(this.mappings.size());
+        keys.addAll(this.mappings.keySet());
+        Collections.sort(keys);
+        
+        for(Integer pc : keys) {
+        	Integer ln = this.mappings.get(pc);
+            ser.addShort(pc);
+            ser.addShort(ln);        	
         }
+        
+//        for (Entry<Integer, Integer> entry : this.mappings.entrySet()) {
+//            ser.addShort(entry.getKey());
+//            ser.addShort(entry.getValue());
+//        }
 
         return ser.getBytes();
     }

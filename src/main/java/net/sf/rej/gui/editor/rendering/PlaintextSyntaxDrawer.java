@@ -21,14 +21,14 @@ package net.sf.rej.gui.editor.rendering;
 /**
  * Class used to draw syntax highlighted text into a graphics
  * object
- * 
+ *
  * @author Sami Koivu
  */
 
 public class PlaintextSyntaxDrawer implements JavaBytecodeSyntaxDrawer {
 
 	public StringBuilder sb = new StringBuilder();
-  
+
     public void drawIndent() {
     	drawDefault("    ");
     }
@@ -76,11 +76,11 @@ public class PlaintextSyntaxDrawer implements JavaBytecodeSyntaxDrawer {
 	public void drawLineBreak() {
 		sb.append("\n");
 	}
-	
+
 	public String getText() {
 		return this.sb.toString();
 	}
-	
+
 	public void clear() {
 		this.sb.delete(0, this.sb.length());
 	}
@@ -90,6 +90,14 @@ public class PlaintextSyntaxDrawer implements JavaBytecodeSyntaxDrawer {
 	}
 
 	public void setExecutionBackground() {
+		// do nothing
+	}
+
+	public void drawImplementedClue() {
+		// do nothing
+	}
+
+	public void drawOverriddenClue() {
 		// do nothing
 	}
 

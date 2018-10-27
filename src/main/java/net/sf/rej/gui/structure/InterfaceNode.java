@@ -19,7 +19,7 @@ package net.sf.rej.gui.structure;
 import net.sf.rej.java.ClassFile;
 import net.sf.rej.java.Interface;
 
-public class InterfaceNode extends StructureNode {
+public class InterfaceNode {
 	private Interface interface0;
 
 	public InterfaceNode(ClassFile cf, Interface interface0) {

@@ -16,19 +16,14 @@
  */
 package net.sf.rej.gui.structure;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.sf.rej.java.ClassFile;
 import net.sf.rej.java.Field;
 
-public class FieldNode extends StructureNode {
+public class FieldNode {
     private Field field;
-    private List<AttributesNode> attributes;
 
     public FieldNode(ClassFile cf, Field field) {
         this.field = field;
-        refresh();
     }
 
     @Override
@@ -36,18 +31,6 @@ public class FieldNode extends StructureNode {
         return this.field.getSignatureLine();
     }
 
-    @Override
-	public List getChildren() {
-        return this.attributes;
-    }
-
-    public void refresh() {
-        this.attributes = new ArrayList<AttributesNode>();
-        AttributesNode attrNode = new AttributesNode(this.field.getAttributes());
-        attrNode.setParent(this);
-        this.attributes.add(attrNode);
-    }
-    
     public Field getField() {
     	return this.field;
     }

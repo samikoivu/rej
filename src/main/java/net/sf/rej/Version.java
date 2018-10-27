@@ -14,30 +14,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package net.sf.rej.gui.action;
+package net.sf.rej;
 
-import net.sf.rej.files.Project;
-import net.sf.rej.gui.Undoable;
-import net.sf.rej.java.ClassFile;
+public class Version {
 
-public class MarkClassFileModifiedAction implements Undoable {
+	public static final String VERSION_STRING = "reJ v0.8";
 
-    private Project project;
-    private String filename;
-    private ClassFile cf;
-
-    public MarkClassFileModifiedAction(Project project, String filename, ClassFile cf) {
-        this.project = project;
-        this.filename = filename;
-        this.cf = cf;
-    }
-
-    public void execute() {
-        this.project.setClassFileMofidied(true, this.filename, this.cf);
-    }
-
-    public void undo() {
-        this.project.setClassFileMofidied(false, this.filename, this.cf);
-    }
-
+	private Version() {
+	}
 }

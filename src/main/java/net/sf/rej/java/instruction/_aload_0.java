@@ -18,6 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+
+import net.sf.rej.java.RandomAccessArray;
 
 /**
  * Load reference from local variable 0.
@@ -87,4 +90,11 @@ public class _aload_0 extends Instruction {
 		return elements;
 	}
 
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		assertType(lvs.get(0), StackElementType.REF);
+		stack.push(lvs.get(0));
+	}
 }

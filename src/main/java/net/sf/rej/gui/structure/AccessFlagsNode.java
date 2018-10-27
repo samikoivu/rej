@@ -18,7 +18,7 @@ package net.sf.rej.gui.structure;
 
 import net.sf.rej.java.ClassFile;
 
-public class AccessFlagsNode extends StructureNode {
+public class AccessFlagsNode {
     private ClassFile cf;
 
     public AccessFlagsNode(ClassFile cf) {

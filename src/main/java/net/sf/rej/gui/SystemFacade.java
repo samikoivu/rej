@@ -19,6 +19,7 @@ package net.sf.rej.gui;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,15 +27,19 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import net.sf.rej.ProjectIterator;
+import net.sf.rej.Version;
 import net.sf.rej.files.Archive;
 import net.sf.rej.files.ClassIndex;
 import net.sf.rej.files.ClassLocator;
+import net.sf.rej.files.DeepArchive;
+import net.sf.rej.files.DeepFolder;
 import net.sf.rej.files.FileSet;
 import net.sf.rej.files.Folder;
+import net.sf.rej.files.NonArchiveFile;
 import net.sf.rej.files.Project;
-import net.sf.rej.files.SingleFile;
+import net.sf.rej.files.RawFile;
 import net.sf.rej.gui.action.GroupAction;
-import net.sf.rej.gui.action.MarkClassFileModifiedAction;
+import net.sf.rej.gui.action.MarkFileModifiedAction;
 import net.sf.rej.gui.action.RemoveFileAction;
 import net.sf.rej.gui.dialog.PreferencesDialog;
 import net.sf.rej.gui.editor.RecentFiles;
@@ -43,16 +48,20 @@ import net.sf.rej.gui.event.EventDispatcher;
 import net.sf.rej.gui.event.EventObserver;
 import net.sf.rej.gui.event.EventType;
 import net.sf.rej.gui.preferences.Preferences;
+import net.sf.rej.gui.preferences.Settings;
 import net.sf.rej.gui.tab.Tab;
 import net.sf.rej.java.ClassFactory;
 import net.sf.rej.java.ClassFile;
+import net.sf.rej.java.ClassHierarchy;
 import net.sf.rej.java.ClassParsingException;
 import net.sf.rej.java.Disassembler;
 import net.sf.rej.java.MethodFactory;
+import net.sf.rej.java.serialized.SerializedStream;
+import net.sf.rej.util.FileToolkit;
 
 /**
  * Common entry point for ReJ GUI system level operations.
- * 
+ *
  * @author Sami Koivu
  */
 public class SystemFacade implements EventObserver {
@@ -64,7 +73,7 @@ public class SystemFacade implements EventObserver {
     ClassIndex classIndex = new ClassIndex();
     private ClassFactory classFactory = new ClassFactory();
     private MethodFactory methodFactory = new MethodFactory();
-    
+
     private Project project = null;
     private String openFile = null;
     private EventDispatcher dispatcher = null;
@@ -89,7 +98,7 @@ public class SystemFacade implements EventObserver {
             this.recent.load();
             this.preferences.setFile(new File("rej.preferences"));
             this.preferences.load();
-          
+
             // update class index
             List list = this.preferences.getClassPathList();
             for (int i = 0; i < list.size(); i++) {
@@ -158,15 +167,58 @@ public class SystemFacade implements EventObserver {
                     "Unsaved changes.", JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE, null, new String[] {
                             "Quit without saving", "Cancel" }, "Cancel");
-            if (answer == 0) {
-                System.exit(0);
+            if (answer == JOptionPane.YES_OPTION) {
+            	exit0();
             }
         } else {
-            System.exit(0);
+        	exit0();
         }
     }
+    
+    private void exit0() {
+    	// save any prefs that need saving
+    	try {
+    		getPreferences().setSetting(Settings.FILE_DIALOG_PATH, MainWindow.getInstance().fileChooser.getCurrentDirectory());
+    		getPreferences().save();
+    	} catch (IOException ioe) {
+    		ioe.printStackTrace();
+    	}
+        System.exit(0);
+    }
 
+    public void refresh() {
+        if (this.project != null && this.project.isModified()) {
+            int answer = JOptionPane.showOptionDialog(MainWindow.getInstance(),
+                    "There are unsaved changes, continue without saving changes?",
+                    "Unsaved changes.", JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE, null, new String[] {
+                            "Continue without saving", "Cancel" }, "Cancel");
+            if (answer == JOptionPane.NO_OPTION) {
+                return; // EARLY RETURN;
+            }
+        }
+
+        openProject(this.project);
+    }
+
+    
     public void openFile(File f) {
+    	if (!f.exists()) {
+    		JOptionPane.showMessageDialog(MainWindow.getInstance(), "File (" + f.getName() + ") not found.");
+    		return; // EARLY RETURN
+    	}
+
+        if (this.project != null && this.project.isModified()) {
+            int answer = JOptionPane.showOptionDialog(MainWindow.getInstance(),
+                    "There are unsaved changes, continue without saving changes?",
+                    "Unsaved changes.", JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE, null, new String[] {
+                            "Continue without saving", "Cancel" }, "Cancel");
+            if (answer == JOptionPane.NO_OPTION) {
+                return; // EARLY RETURN;
+            }
+        }
+
         if (this.project != null) {
             this.classIndex.removeElement(this.project.getFileSet());
         }
@@ -185,8 +237,8 @@ public class SystemFacade implements EventObserver {
         	handleException(e);
         }
     }
-    
-    public void openProject(Project project) {
+
+	public void openProject(Project project) {
     	try {
     		if (this.project != null) {
     			Event closeEvent = new Event(EventType.PROJECT_UPDATE);
@@ -196,15 +248,44 @@ public class SystemFacade implements EventObserver {
     		event.setProject(project);
     		this.dispatcher.notifyObservers(event);
 
-    		Event fileEvent = new Event(EventType.CLASS_OPEN);
-            if (project.getFileSet() instanceof SingleFile) {
-                fileEvent.setFile(project.getFile().getName());
-                fileEvent.setClassFile(project.getClassFile(project.getFile().getName()));
-            }
-            this.dispatcher.notifyObservers(fileEvent);
+            if (project.getFileSet() instanceof NonArchiveFile) {
+            	NonArchiveFile nfa = (NonArchiveFile) project.getFileSet();
+            	Event fileEvent = null;
+            	switch (nfa.getType()) {
+            	case CLASS: {
+            		fileEvent = new Event(EventType.CLASS_OPEN);
+            		fileEvent.setClassFile((ClassFile) project.getFile(project.getFile().getName()));
+            		break;
+            	}
+            	case SERIALIZED: {
+            		fileEvent = new Event(EventType.SERIALIZED_OPEN);
+            		fileEvent.setSerialized((SerializedStream) project.getFile(project.getFile().getName()));
+            		break;
+            	}
+            	case RAW: {
+            		fileEvent = new Event(EventType.RAW_OPEN);
+            		fileEvent.setRaw((RawFile) project.getFile(project.getFile().getName()));
+            		break;
+            	}
+            	}
 
-            if (project.getFileSet() instanceof SingleFile) {
-                MainWindow.getInstance().setTab(Tab.EDITOR);
+        		fileEvent.setFile(project.getFile().getName());
+        		this.dispatcher.notifyObservers(fileEvent);
+            }
+
+            if (project.getFileSet() instanceof NonArchiveFile) {
+            	NonArchiveFile naf = (NonArchiveFile) project.getFileSet();
+            	switch (naf.getType()) {
+            	case CLASS:
+            		MainWindow.getInstance().setTab(Tab.EDITOR);
+            		break;
+            	case SERIALIZED:
+            		MainWindow.getInstance().setTab(Tab.SERIALIZED_LIST);
+            		break;
+            	case RAW:
+            		MainWindow.getInstance().setTab(Tab.HEX);
+            		break;
+            	}
             } else {
                 MainWindow.getInstance().setTab(Tab.FILES);
             }
@@ -219,8 +300,10 @@ public class SystemFacade implements EventObserver {
 
     public void saveFile() {
         try {
-            this.project.save();
-            setTitle();
+        	if (this.project != null) {
+        		this.project.save();
+        		setTitle();
+        	}
         } catch (Exception e) {
             handleException(e);
         }
@@ -228,8 +311,10 @@ public class SystemFacade implements EventObserver {
 
     public void saveFile(File file) {
         try {
-            this.project.saveAs(file);
-            setTitle();
+        	if (this.project != null) {
+        		this.project.saveAs(file);
+        		setTitle();
+        	}
         } catch (Exception e) {
             handleException(e);
         }
@@ -284,26 +369,43 @@ public class SystemFacade implements EventObserver {
     }
 
     public FileSet getFileSet(File f) throws IOException {
-        if (f.getName().endsWith(".class")) {
-            return new SingleFile(f);
-        } else if (f.isDirectory()) {
-            return new Folder(f);
-        } else if (f.getName().endsWith(".zip") || f.getName().endsWith(".jar")) {
-            return new Archive(f);
+        if (f.isDirectory()) {
+        	if (this.preferences.isSettingTrue(Settings.DEEP_FOLDERS)) {
+        		return new DeepFolder(f);
+        	} else {
+        		return new Folder(f);
+        	}
         } else {
-            throw new RuntimeException("File of wrong type: " + f.getName());
+        	byte[] magic = FileToolkit.peekMagic(f);
+        	byte[] classMagic = { (byte) 0xCa, (byte) 0xfe, (byte) 0xBa, (byte) 0xbe};
+        	byte[] archiveMagic = { (byte) 0x50, (byte) 0x4b, (byte) 0x03, (byte) 0x04};
+        	if (Arrays.equals(magic, classMagic)) {
+        		return new NonArchiveFile(f, NonArchiveFile.Type.CLASS);
+        	} else if (Arrays.equals(magic, archiveMagic)) {
+            	if (this.preferences.isSettingTrue(Settings.DEEP_ARCHIVES)) {
+            		return new DeepArchive(f);
+            	} else {
+            		return new Archive(f);
+            	}
+        	} else if (magic.length >= 2 && magic[0] == (byte)0xac && magic[1] == (byte)0xed) {
+        		return new NonArchiveFile(f, NonArchiveFile.Type.SERIALIZED);
+        	}
+
+    		return new NonArchiveFile(f, NonArchiveFile.Type.RAW);
         }
     }
 
-    public void setTitle(String title) {
+    private void setTitle(String title) {
         MainWindow.getInstance().setTitle(title);
     }
 
     public void setTitle() {
-        if (this.project.isModified()) {
-            setTitle("reJ - *" + this.project.getFile().getPath());
+        if (this.project == null) {
+        	setTitle(Version.VERSION_STRING);
+    	} else if (this.project.isModified()) {
+            setTitle(Version.VERSION_STRING + " - *" + this.project.getFile().getPath());
         } else {
-            setTitle("reJ - " + this.project.getFile().getPath());
+            setTitle(Version.VERSION_STRING + " - " + this.project.getFile().getPath());
         }
     }
 
@@ -318,7 +420,7 @@ public class SystemFacade implements EventObserver {
 	 * <code>UndoManager</code> of the target file and project modified status
 	 * is set accordingly. An application-wide CLASS_UPDATE notification is
 	 * dispatched.
-	 * 
+	 *
 	 * @param action
 	 *            <code>Undoable</code> that is to be performed.
 	 * @param targetFile
@@ -332,8 +434,13 @@ public class SystemFacade implements EventObserver {
             	// with an action that changes the status of the file.
                 GroupAction ga = new GroupAction();
                 ga.add(action);
-            	ClassFile cf = getClassFile(targetFile);
-                ga.add(new MarkClassFileModifiedAction(this.project, targetFile, cf));
+                // TODO: since the fileObject before it's first modification is stored
+                // using SoftReference, there is a risk that the file is reparsed at this
+                // moment and UI would hold and the undoable would act on one instance
+                // and the project cache would hold a different instance, and upon saving
+                // none of the changes end up getting saved.
+            	FileObject fileObject = getFile(targetFile);
+                ga.add(new MarkFileModifiedAction(this.project, targetFile, fileObject));
                 um.add(ga);
                 ga.execute();
             } else {
@@ -435,8 +542,13 @@ public class SystemFacade implements EventObserver {
         	if (!link.getFile().equals(this.openFile)) {
 				Event event = new Event(EventType.CLASS_OPEN);
 				try {
-					ClassFile cf = this.project.getClassFile(link.getFile());
-					event.setClassFile(cf);
+					if (link.getClassLocator() == null) {
+						ClassFile cf = (ClassFile) this.project.getFile(link.getFile());
+						event.setClassFile(cf);
+					} else {
+						ClassFile cf = (ClassFile) getClassFile(link.getClassLocator());
+						event.setClassFile(cf);
+					}
 					event.setFile(link.getFile());
 					this.dispatcher.notifyObservers(event);
 				} catch(Exception ex) {
@@ -471,16 +583,16 @@ public class SystemFacade implements EventObserver {
      * @throws ClassParsingException
      *             Parsing Exception - the ClassFile was malformed
      */
-    public ClassFile getClassFile(String filename) throws IOException,
+    public FileObject getFile(String filename) throws IOException,
             ClassParsingException {
-        return this.project.getClassFile(filename);
+        return this.project.getFile(filename);
     }
 
-    public ClassFile getClassFile(ClassLocator classLocator)
+    public FileObject getClassFile(ClassLocator classLocator)
             throws IOException, ClassParsingException {
-        FileSet projectFileSet = this.project.getFileSet();
-        if (projectFileSet.equals(classLocator.getFileSet())) {
-            return getClassFile(classLocator.getFile());
+
+        if (this.project != null && this.project.getFileSet().equals(classLocator.getFileSet())) {
+            return getFile(classLocator.getFile());
         } else {
             // TODO: should these be cached as well? that is, ClassFile objects
             // of classes that are not in the open project(but are in the
@@ -521,7 +633,7 @@ public class SystemFacade implements EventObserver {
                 return; // EARLY RETURN
             }
         }
-        
+
         try {
 			Archive archive = Archive.createNew(archiveFile);
 			Project project = new Project();
@@ -538,7 +650,7 @@ public class SystemFacade implements EventObserver {
         // TODO: Creating a new class should be an undoable action?
         ClassFile cf = this.classFactory.createClass(fullClassName);
         this.project.addFile(selectedFile, cf);
-        
+
         /* TODO: the file hasn't been saved into the set yet at this point
          * sor the following throws a NullPointerException
         try {
@@ -546,11 +658,11 @@ public class SystemFacade implements EventObserver {
         } catch(IOException ioe) {
         	handleException(ioe);
         }*/
-        
+
         Event event = new Event(EventType.PROJECT_UPDATE);
         event.setProject(this.project);
-        this.dispatcher.notifyObservers(event);        
-        
+        this.dispatcher.notifyObservers(event);
+
         event = new Event(EventType.CLASS_OPEN);
         event.setClassFile(cf);
         event.setFile(selectedFile);
@@ -570,8 +682,12 @@ public class SystemFacade implements EventObserver {
 			this.project = event.getProject();
 			break;
 		case CLASS_OPEN:
+		case BINARY_XML_OPEN:
+		case DEX_OPEN:
+		case SERIALIZED_OPEN:
 			this.openFile = event.getFile();
 			break;
+		case SERIALIZED_UPDATE:
 		case CLASS_UPDATE:
 		case CLASS_REPARSE:
 		case CLASS_PARSE_ERROR:
@@ -589,13 +705,22 @@ public class SystemFacade implements EventObserver {
 		case DEBUG_STACK_FRAME_CHANGED:
 		case DEBUG_SUSPEND_REQUESTED:
 		case DEBUG_THREAD_CHANGED:
+		case RAW_OPEN:
 			// do nothing
 			break;
 		}
 	}
-	
+
 	public Preferences getPreferences() {
 		return this.preferences;
+	}
+
+	public boolean isProjectOpen() {
+		return this.project != null;
+	}
+
+	public ClassHierarchy getClassHierarchy(ClassFile cf) throws IOException {
+		return ClassHierarchy.getHierarchy(cf, this.classIndex);
 	}
 
 }

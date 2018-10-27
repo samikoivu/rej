@@ -16,7 +16,9 @@
  */
 package net.sf.rej.java;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.java.instruction.*;
 
@@ -220,7 +222,7 @@ public class InstructionSet {
 		instructions[183] = _invokespecial.class;
 		instructions[184] = _invokestatic.class;
 		instructions[185] = _invokeinterface.class;
-		instructions[186] = _xxxunusedxxx.class;
+		instructions[186] = _invokedynamic.class;
 		instructions[187] = _new.class;
 		instructions[188] = _newarray.class;
 		instructions[189] = _anewarray.class;
@@ -289,15 +291,90 @@ public class InstructionSet {
 		}
 	}
 
-	public Vector<Instruction> getInstructions() {
-		Vector<Instruction> v = new Vector<Instruction>();
-		for (int i = 0; i < instructions.length; i++) {
-			if (getInstruction(i) != null) {
-				v.add(getInstruction(i));
+	public static void main(String[] args) {
+		InstructionSet set = InstructionSet.getInstance();
+		DecompilationContext dc = new DecompilationContext();
+		List<Class> skip = new ArrayList<Class>();
+		skip.add(_ldc.class);
+		skip.add(_ldc_w.class);
+		skip.add(_ldc2_w.class);
+		skip.add(_getstatic.class);
+		skip.add(_putstatic.class);
+		skip.add(_getfield.class);
+		skip.add(_putfield.class);
+		skip.add(_invokevirtual.class);
+		skip.add(_invokespecial.class);
+		skip.add(_invokestatic.class);
+		skip.add(_invokeinterface.class);
+
+		skip.add(_iload.class);
+		skip.add(_iload_0.class);
+		skip.add(_iload_1.class);
+		skip.add(_iload_2.class);
+		skip.add(_iload_3.class);
+		skip.add(_lload_0.class);
+		skip.add(_lload_1.class);
+		skip.add(_lload_2.class);
+		skip.add(_lload_3.class);
+		skip.add(_fload_0.class);
+		skip.add(_fload_1.class);
+		skip.add(_fload_2.class);
+		skip.add(_fload_3.class);
+		skip.add(_dload_0.class);
+		skip.add(_dload_1.class);
+		skip.add(_dload_2.class);
+		skip.add(_dload_3.class);
+		skip.add(_aload_0.class);
+		skip.add(_aload_1.class);
+		skip.add(_aload_2.class);
+		skip.add(_aload_3.class);
+
+		skip.add(_lload.class);
+		skip.add(_fload.class);
+		skip.add(_dload.class);
+		skip.add(_aload.class);
+		skip.add(_new.class);
+		skip.add(_newarray.class);
+		skip.add(_anewarray.class);
+		skip.add(_wide.class);
+		skip.add(_multianewarray.class);
+		skip.add(_anewarray_quick.class);
+		
+		for (int i=0; i < 256; i++) {
+			Instruction instr;
+			try {
+				instr = set.getInstruction(i);
+			} catch (NullPointerException npe) {
+				continue;
+			}
+			if (instr == null) continue;
+			if (skip.contains(instr.getClass())) {
+				continue;
+			}
+			
+			dc.setStack(new Stack());
+			dc.setLocalVariables(new RandomAccessArray());
+			List<StackElement> popped = instr.getPoppedElements(dc);
+			List<StackElement> pushed = instr.getPushedElements(dc);
+			
+			// TODO: fill stack according to popped
+			for (StackElement se : popped) {
+				dc.getStack().push(se);
+			}
+			
+			instr.stackFlow(dc);
+			
+			// TODO: survey stack to see if it matches pushed
+			System.out.println("Stack size: " + instr.getMnemonic() + " " + pushed.size() + " =? " + dc.getStack().size());
+
+			if (pushed.size() == dc.getStack().size()) {
+				for (StackElement se : pushed) {
+					StackElement obj = dc.getStack().pop();
+					instr.assertType(obj, se.getType());
+				}
+			} else {
+				System.err.println("Stack size mismatch: " + instr.getMnemonic() + " " + pushed.size() + " <> " + dc.getStack().size());
 			}
 		}
-
-		return v;
 	}
-
 }

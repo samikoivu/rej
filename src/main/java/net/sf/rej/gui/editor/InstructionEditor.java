@@ -74,7 +74,7 @@ public class InstructionEditor extends JDialog implements LayoutChangeListener {
     			Instruction inst = (Instruction) obj;
     			return hints.getHint(inst);
     		}
-    		
+
     		return super.getToolTipText();
     	}
     };
@@ -82,11 +82,11 @@ public class InstructionEditor extends JDialog implements LayoutChangeListener {
     private JButton cancelButton = new JButton("Cancel");
     private JPanel paramPanel = new JPanel();
     private JPanel buttonPanel = new JPanel();
-    
+
     boolean cancelled = true;
 
     public InstructionEditor() {
-        super(MainWindow.getInstance(), "Instruction editor", true);
+        super(MainWindow.getInstance(), "Instruction Editor", true);
         this.getContentPane().setLayout(new BorderLayout());
         this.content.setLayout(new GridBagLayout());
         this.instructionInfo.setLayout(new GridBagLayout());
@@ -100,7 +100,7 @@ public class InstructionEditor extends JDialog implements LayoutChangeListener {
 			public void actionPerformed(ActionEvent e) {
 				cancelled = true;
 				setVisible(false);
-			}        	
+			}
         });
         this.paramPanel.setLayout(new GridBagLayout());
         this.instructionInfo.setBorder(BorderFactory.createTitledBorder("Instruction"));
@@ -154,7 +154,7 @@ public class InstructionEditor extends JDialog implements LayoutChangeListener {
 			public void itemStateChanged(ItemEvent e) {
 		        instruction = (Instruction) instructionCombo.getSelectedItem();
 		        updateEditor();
-			}      	
+			}
         };
         this.instructionCombo.addItemListener(il);
         updateEditor();
@@ -290,11 +290,16 @@ public class InstructionEditor extends JDialog implements LayoutChangeListener {
             	break;
             }
         }
+        if (this.choosers.size() == 0) {
+        	this.paramPanel.setVisible(false);
+        } else {
+        	this.paramPanel.setVisible(true);
+        }
         this.pack();
         this.paramPanel.validate();
         this.paramPanel.repaint();
     }
-    
+
     public boolean wasCancelled() {
     	return this.cancelled;
     }
@@ -306,15 +311,15 @@ public class InstructionEditor extends JDialog implements LayoutChangeListener {
 	public List getChoosers() {
 		return this.choosers;
 	}
-	
+
 	public void setLocalVariableTable(LocalVariableTableAttribute lvTable) {
 		this.lvTable = lvTable;
 	}
-	
+
 	public void setPC(int pc) {
 		this.position = pc;
 	}
-	
+
 	public void setClassFile(ClassFile cf) {
 		this.cf = cf;
 		this.pool = cf.getPool();

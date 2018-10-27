@@ -18,7 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
+import net.sf.rej.java.constantpool.ClassInfo;
 import net.sf.rej.util.ByteSerializer;
 import net.sf.rej.util.ByteToolkit;
 
@@ -116,6 +118,21 @@ public class _multianewarray extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("arrayref", StackElementType.REF));
 		return elements;
+	}
+	
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		
+		ClassInfo ci = (ClassInfo) dc.getConstantPool().get(this.index);
+		
+		StringBuilder type = new StringBuilder(ci.getName());
+		
+		for (int i=0; i < this.dimensions; i++) {
+			assertType(stack.pop(), StackElementType.INT);
+			type.append("[]");
+		}
+		stack.push(StackElement.valueOf(type.toString(), StackElementType.REF));
 	}
 
 }

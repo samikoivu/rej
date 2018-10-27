@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.util.ByteSerializer;
 import net.sf.rej.util.ByteToolkit;
@@ -27,7 +28,7 @@ import net.sf.rej.util.ByteToolkit;
  * 
  * @author Sami Koivu
  */
-public class _iflt extends Instruction {
+public class _iflt extends Instruction implements Branchable {
 
 	public static final int OPCODE = 0x9b;
 
@@ -107,6 +108,12 @@ public class _iflt extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("value", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.INT);
 	}
 
 }

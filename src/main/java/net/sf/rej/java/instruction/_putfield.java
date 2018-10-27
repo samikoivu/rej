@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.java.Descriptor;
 import net.sf.rej.java.JavaType;
@@ -117,6 +118,37 @@ public class _putfield extends Instruction {
 			}
 		}
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		StackElement valueToPut = stack.pop();
+		StackElement targetObject = stack.pop();
+		assertType(targetObject, StackElementType.REF);
+		
+		RefInfo ri = (RefInfo) dc.getConstantPool().get(this.index);
+		Descriptor desc = ri.getDescriptor();
+		JavaType jt = desc.getReturn();
+		System.out.println(valueToPut.getName()  + " IS A " + jt);
+		if (jt.getDimensionCount() > 0 || (!jt.isPrimitive())) {
+			// array or primitive are both refs
+			assertType(valueToPut, StackElementType.REF);
+			// Here is where we can deduce stuff about hierarcy
+			// if this is valid code, value IS-A jt
+		} else {
+			// primitive non-array
+			if (jt.getType().equals("long")) {
+				assertType(valueToPut, StackElementType.LONG);
+			} else if (jt.getType().equals("float")) {
+				assertType(valueToPut, StackElementType.FLOAT);
+			} else if (jt.getType().equals("double")) {
+				assertType(valueToPut, StackElementType.DOUBLE);
+			} else {
+				// boolean, byte, short, char and int are all of type int
+				assertType(valueToPut, StackElementType.INT);
+			}
+		}
 	}
 
 }

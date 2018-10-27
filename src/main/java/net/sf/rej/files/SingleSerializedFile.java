@@ -28,24 +28,19 @@ import java.util.List;
 import net.sf.rej.util.FileToolkit;
 import net.sf.rej.util.IOToolkit;
 
-public class SingleFile extends FileSet {
+public class SingleSerializedFile extends FileSet {
 
     private File f;
     private List<InputStream> streams = new ArrayList<InputStream>();
 
-    public SingleFile(File f) throws FileNotFoundException {
+    public SingleSerializedFile(File f) throws FileNotFoundException {
         if (!f.exists())throw new FileNotFoundException(f.getName());
         this.f = f;
     }
 
-    private SingleFile() {
+    private SingleSerializedFile() {
     	// for internal use of the class
         // do-nothing constructor
-    }
-
-    @Override
-	public long getLength(String file) {
-        return this.f.length();
     }
 
     @Override
@@ -151,8 +146,8 @@ public class SingleFile extends FileSet {
 		// a type of SingleFile has no contents so nothing will be removed
 	}
 
-    public static SingleFile createNew(File file) throws IOException {
-        SingleFile sf = new SingleFile();
+    public static SingleSerializedFile createNew(File file) throws IOException {
+        SingleSerializedFile sf = new SingleSerializedFile();
         sf.f = file;
         File parent = file.getParentFile();
         if (!parent.exists()) {

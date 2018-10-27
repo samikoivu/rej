@@ -20,7 +20,7 @@ import java.io.ByteArrayOutputStream;
 
 /**
  * A class that wraps a byte array for stream-type writing.
- * 
+ *
  * @author Sami Koivu
  */
 
@@ -53,28 +53,74 @@ public class ByteSerializer {
         this.baos.write(b);
     }
 
-    public void addShort(int i) {
-        if (i > 0xffff)
+    public void addShort(int l) {
+        if (l > 0xffff)
             throw new RuntimeException(
-                    "ByteSerializer.addInt(long) does not support integers this big: "
-                            + i);
+                    "ByteSerializer.addShort(long) does not support integers this big: "
+                            + l);
 
-        byte[] data = ByteToolkit.longToTwoBytes(i, this.bigEndian);
-        addBytes(data);
+//        byte[] data = ByteToolkit.longToTwoBytes(i, this.bigEndian);
+//        addBytes(data);
+		if (this.bigEndian) {
+	        baos.write((byte)(l >>>  8));
+	        baos.write((byte)(l >>>  0));
+		} else {
+	        baos.write((byte)(l >>>  0));
+	        baos.write((byte)(l >>>  8));
+		}
     }
 
-    public void addInt(long l) {
-        // if(l < 0) throw new RuntimeException("ByteSerializer.addLong(long)
-        // does not support negative values.(" + l + ")");
-
-        byte[] data = ByteToolkit.longToFourBytes(l, this.bigEndian);
-        // if(l < 0) System.out.println(l + " = " +
-        // ByteToolkit.getHexString(data));
-        addBytes(data);
+    public void addInt(int l) {
+//        byte[] data = ByteToolkit.longToFourBytes(l, this.bigEndian);
+//        addBytes(data);
+		if (this.bigEndian) {
+	        baos.write((byte)(l >>> 24));
+	        baos.write((byte)(l >>> 16));
+	        baos.write((byte)(l >>>  8));
+	        baos.write((byte)(l >>>  0));
+		} else {
+	        baos.write((byte)(l >>>  0));
+	        baos.write((byte)(l >>>  8));
+	        baos.write((byte)(l >>> 16));
+	        baos.write((byte)(l >>> 24));
+		}
     }
 
     public int size() {
         return this.baos.size();
     }
+
+
+	public void addLong(long l) {
+		if (this.bigEndian) {
+	        baos.write((byte)(l >>> 56));
+	        baos.write((byte)(l >>> 48));
+	        baos.write((byte)(l >>> 40));
+	        baos.write((byte)(l >>> 32));
+	        baos.write((byte)(l >>> 24));
+	        baos.write((byte)(l >>> 16));
+	        baos.write((byte)(l >>>  8));
+	        baos.write((byte)(l >>>  0));
+		} else {
+	        baos.write((byte)(l >>>  0));
+	        baos.write((byte)(l >>>  8));
+	        baos.write((byte)(l >>> 16));
+	        baos.write((byte)(l >>> 24));
+	        baos.write((byte)(l >>> 32));
+	        baos.write((byte)(l >>> 40));
+	        baos.write((byte)(l >>> 48));
+	        baos.write((byte)(l >>> 56));
+		}
+	}
+
+	public void addChar(int c) {
+        baos.write((c >>>  8) & 0xFF);
+        baos.write((c >>>  0) & 0xFF);
+	}
+
+	public void alignBy(int i) {
+		int alignment = this.baos.size() % 4;
+		addBytes(new byte[alignment]);
+	}
 
 }

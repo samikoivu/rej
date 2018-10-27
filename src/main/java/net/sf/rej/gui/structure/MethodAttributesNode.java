@@ -16,41 +16,22 @@
  */
 package net.sf.rej.gui.structure;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.rej.java.Method;
-import net.sf.rej.java.attribute.Attribute;
-import net.sf.rej.java.attribute.Attributes;
 
-public class MethodAttributesNode extends StructureNode {
+public class MethodAttributesNode {
 	private Method method;
 
 	private List<AttributeNode> attributes;
 
 	public MethodAttributesNode(Method method) {
 		this.method = method;
-		refresh();
 	}
 
 	@Override
 	public String toString() {
 		return "Attributes (" + this.attributes.size() + ")";
-	}
-
-	public void refresh() {
-		this.attributes = new ArrayList<AttributeNode>();
-		Attributes attrs = this.method.getAttributes();
-		List list = attrs.getAttributes();
-		for (int i = 0; i < list.size(); i++) {
-			Attribute attr = (Attribute) list.get(i);
-			this.attributes.add(new AttributeNode(attrs, attr));
-		}
-	}
-
-	@Override
-	public List getChildren() {
-		return this.attributes;
 	}
 
 }

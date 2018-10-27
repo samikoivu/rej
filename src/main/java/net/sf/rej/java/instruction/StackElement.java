@@ -25,6 +25,12 @@ package net.sf.rej.java.instruction;
  */
 public class StackElement {
 	
+	public static final StackElement NULL = new StackElement("<null>", StackElementType.NULL);
+	public static final StackElement INT = new StackElement("int", StackElementType.INT);
+	public static final StackElement LONG = new StackElement("long", StackElementType.LONG);
+	public static final StackElement FLOAT = new StackElement("float", StackElementType.FLOAT);
+	public static final StackElement DOUBLE = new StackElement("double", StackElementType.DOUBLE);
+
 	private String elementName;
 	private StackElementType elementType;
 	
@@ -40,5 +46,29 @@ public class StackElement {
 	public StackElementType getType() {
 		return this.elementType;
 	}
+
+	public static StackElement valueOf(String name, StackElementType type) {
+		// just use new TODO: at some point think about resources (for the children)
+		return new StackElement(name, type);
+	}
+
+	public static StackElement valueOf(StackElementType type) {
+		if (type == StackElementType.NULL) {
+			return NULL;
+		} else if (type == StackElementType.INT) {
+			return INT;
+		} else if (type == StackElementType.LONG) {
+			return LONG;
+		} else if (type == StackElementType.FLOAT) {
+			return FLOAT;
+		} else if (type == StackElementType.DOUBLE) {
+			return DOUBLE;
+		}
+		return new StackElement(type.name(), type);
+	}
 	
+	@Override
+	public String toString() {
+		return (elementName == null ? "" : elementName) + " " + elementType;
+	}
 }

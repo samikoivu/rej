@@ -233,4 +233,25 @@ public class AccessFlags {
 
 		return value;
 	}
+	
+	public static String toString(int f) {
+		StringBuilder sb = new StringBuilder();
+		
+		if ((f & PUBLIC) != 0) sb.append("public ");
+		if ((f & PRIVATE) != 0) sb.append("private ");
+		if ((f & PROTECTED) != 0) sb.append("protected ");
+		if ((f & STATIC) != 0) sb.append("static ");
+		if ((f & ABSTRACT) != 0) sb.append("abstract ");
+		if ((f & FINAL) != 0) sb.append("final ");
+		if ((f & NATIVE) != 0) sb.append("native ");
+		if ((f & SUPER) != 0) sb.append("super ");
+		if ((f & SYNCHRONIZED) != 0) sb.append("synchronized ");
+		if ((f & INTERFACE) != 0) sb.append("interface ");
+		if ((f & ENUM) != 0) sb.append("enum ");
+		if ((f & ANNOTATION) != 0) sb.append("annotation ");
+		if ((f & VARARGS) != 0) sb.append("varargs ");
+		if ((f & BRIDGE) != 0) sb.append("bridge ");
+		
+		return sb.toString().trim();
+	}
 }

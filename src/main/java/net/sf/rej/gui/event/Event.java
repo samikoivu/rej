@@ -16,27 +16,41 @@
  */
 package net.sf.rej.gui.event;
 
+import net.sf.rej.android.BinaryXMLFile;
+import net.sf.rej.android.DexFile;
 import net.sf.rej.files.Project;
+import net.sf.rej.files.RawFile;
 import net.sf.rej.gui.debug.wrappers.IStackFrame;
 import net.sf.rej.gui.debug.wrappers.IThreadReference;
 import net.sf.rej.gui.debug.wrappers.IVirtualMachine;
 import net.sf.rej.java.ClassFile;
+import net.sf.rej.java.serialized.SerializedStream;
 
 public class Event {
 	private EventType type;
+	
+	// different types of files
 	private ClassFile cf;
+	private SerializedStream serialized;
+	private DexFile dex;
+	private BinaryXMLFile binaryXML;
+	private RawFile raw;
+
 	private Project project;
+	
 	private String file;
+	
 	private EventDispatcher dispatcher;
+	
 	// debugging related
 	private IThreadReference threadReference;
 	private IStackFrame stackFrame;
 	private IVirtualMachine vm;
-	
+
 	public Event(EventType type) {
 		this.type = type;
 	}
-	
+
 	public EventType getType() {
 		return this.type;
 	}
@@ -44,7 +58,7 @@ public class Event {
 	public void setClassFile(ClassFile cf) {
 		this.cf = cf;
 	}
-	
+
 	public ClassFile getClassFile() {
 		return this.cf;
 	}
@@ -52,7 +66,7 @@ public class Event {
 	public void setProject(Project project) {
 		this.project = project;
 	}
-	
+
 	public Project getProject() {
 		return this.project;
 	}
@@ -60,15 +74,15 @@ public class Event {
 	public void setFile(String file) {
 		this.file = file;
 	}
-	
+
 	public String getFile() {
 		return this.file;
 	}
-	
+
 	public void setDispatcher(EventDispatcher notificator) {
 		this.dispatcher = notificator;
 	}
-	
+
 	public EventDispatcher getDispatcher() {
 		return this.dispatcher;
 	}
@@ -76,7 +90,7 @@ public class Event {
 	public void setThread(IThreadReference obj) {
 		this.threadReference = obj;
 	}
-	
+
 	public IThreadReference getThread() {
 		return this.threadReference;
 	}
@@ -84,16 +98,48 @@ public class Event {
 	public void setVM(IVirtualMachine vm) {
 		this.vm = vm;
 	}
-	
+
 	public IVirtualMachine getVM() {
 		return this.vm;
 	}
-	
+
 	public void setStackFrame(IStackFrame stackFrame) {
 		this.stackFrame = stackFrame;
 	}
 
 	public IStackFrame getStackFrame() {
 		return stackFrame;
+	}
+
+	public void setSerialized(SerializedStream serialized) {
+		this.serialized = serialized;
+	}
+
+	public void setRaw(RawFile raw) {
+		this.raw = raw;
+	}
+
+	public RawFile getRaw() {
+		return raw;
+	}
+
+	public SerializedStream getSerialized() {
+		return serialized;
+	}
+
+	public void setDex(DexFile dex) {
+		this.dex = dex;
+	}
+	
+	public DexFile getDex() {
+		return this.dex;
+	}
+
+	public void setBinaryXML(BinaryXMLFile xml) {
+		this.binaryXML = xml;
+	}
+	
+	public BinaryXMLFile getBinaryXML() {
+		return this.binaryXML;
 	}
 }

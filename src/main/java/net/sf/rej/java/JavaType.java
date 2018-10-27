@@ -77,7 +77,7 @@ public class JavaType {
             this.dimensions = def.substring(i).length()/2;
         }
     }
-
+    
     /**
      * Instantiates a new <code>JavaType</code> specifying explicitly the
      * name and the number of dimensions.

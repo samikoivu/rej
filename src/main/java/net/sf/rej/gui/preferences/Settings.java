@@ -19,5 +19,8 @@ package net.sf.rej.gui.preferences;
 public enum Settings {
 	DISPLAY_EXTENDS_OBJECT,
 	DISPLAY_GENERICS,
-	DISPLAY_VARARGS
+	DISPLAY_VARARGS,
+	DEEP_ARCHIVES,
+	DEEP_FOLDERS,
+	FILE_DIALOG_PATH
 }

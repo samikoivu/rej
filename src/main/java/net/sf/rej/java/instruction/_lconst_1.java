@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Push the long constant 1 onto the operand stack.
@@ -82,6 +83,12 @@ public class _lconst_1 extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("1", StackElementType.LONG));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		stack.push(StackElement.valueOf(StackElementType.LONG));
 	}
 
 }

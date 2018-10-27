@@ -44,7 +44,7 @@ public class HexEditorTab extends JPanel implements Tabbable, EventObserver {
     public HexEditorTab() {
         this.setLayout(new BorderLayout());
     }
-    
+
     public HexEditorPanel getHexEditor() {
     	return this.hexEditor;
     }
@@ -81,29 +81,49 @@ public class HexEditorTab extends JPanel implements Tabbable, EventObserver {
         	if (event.getType() == EventType.INIT) {
         		this.dispatcher = event.getDispatcher();
         	}
-        	
+
         	if (event.getType() == EventType.CLASS_OPEN) {
         		this.cf = event.getClassFile();
         	}
-        	
+
         	if (event.getType() == EventType.CLASS_OPEN || event.getType() == EventType.CLASS_UPDATE) {
         		this.upToDate = false;
         		if (isOpen) {
         			refresh();
         		}
             }
+
+        	if (event.getType() == EventType.SERIALIZED_OPEN) {
+        		this.cf = null;
+        		this.data = event.getSerialized().getData();
+        		this.upToDate = false;
+        		if (isOpen) {
+        			refresh();
+        		}
+        	}
+
+        	if (event.getType() == EventType.RAW_OPEN) {
+        		this.cf = null;
+        		this.data = event.getRaw().getData();
+        		this.upToDate = false;
+        		if (isOpen) {
+        			refresh();
+        		}
+        	}
         } catch(Exception e) {
             SystemFacade.getInstance().handleException(e);
         }
     }
-	
+
 	public void refresh() {
-		if (this.cf != null) {
+		if (this.cf != null || this.data != null) {
 			// TODO: update the hex panel instead of creating a new one
 			if (this.hexEditor != null) {
 				this.remove(this.hexEditor);
 			}
-			this.data = this.cf.getData(); 
+			if (this.cf != null) {
+				this.data = this.cf.getData();
+			}
 			ByteArrayDataProvider badp = new ByteArrayDataProvider(this.data) {
 				@Override
 				public void set(int index, byte value) {
@@ -117,7 +137,7 @@ public class HexEditorTab extends JPanel implements Tabbable, EventObserver {
 			this.add(this.hexEditor, BorderLayout.CENTER);
 			this.validate();
 		}
-		
+
 		this.upToDate = true;
 	}
 
@@ -126,10 +146,9 @@ public class HexEditorTab extends JPanel implements Tabbable, EventObserver {
 
 	public void leavingTab() {
 		this.isOpen = false;
-		
-		if (this.modified) {
+
+		if (this.modified && this.cf != null) {
 			this.modified = false;
-			// TODO: recover from a parsing error - invalid class
 			try {
 				this.cf = Disassembler.readClass(this.data);
 				Event event = new Event(EventType.CLASS_REPARSE);
@@ -139,12 +158,12 @@ public class HexEditorTab extends JPanel implements Tabbable, EventObserver {
 				SystemFacade.getInstance().handleException(e);
 				this.dispatcher.notifyObservers(new Event(EventType.CLASS_PARSE_ERROR));
 			}
-		}	
+		}
 	}
 
 	public void enteringTab() {
 		this.isOpen = true;
-		
+
 		if (!this.upToDate) {
 			refresh();
 		}

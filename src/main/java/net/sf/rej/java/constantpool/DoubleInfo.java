@@ -26,11 +26,11 @@ import net.sf.rej.util.ByteSerializer;
  */
 
 public class DoubleInfo extends ConstantPoolInfo {
-	private long highBytes;
+	private int highBytes;
 
-	private long lowBytes;
+	private int lowBytes;
 
-	public DoubleInfo(long highBytes, long lowBytes, ConstantPool pool) {
+	public DoubleInfo(int highBytes, int lowBytes, ConstantPool pool) {
 		super(DOUBLE, pool);
 		this.highBytes = highBytes;
 		this.lowBytes = lowBytes;
@@ -58,7 +58,7 @@ public class DoubleInfo extends ConstantPoolInfo {
 
 	@Override
 	public int hashCode() {
-		return (int) this.highBytes +  (int) this.lowBytes;
+		return this.highBytes + this.lowBytes;
 	}
 
 	@Override
@@ -93,15 +93,15 @@ public class DoubleInfo extends ConstantPoolInfo {
 
 	public void setDoubleValue(double newValue) {
 		long raw = Double.doubleToRawLongBits(newValue);
-		this.lowBytes = raw & 0xFFFFFFFFl;
-		this.highBytes = raw >> 32;
+		this.lowBytes = (int)(raw & 0xFFFFFFFF);
+		this.highBytes = (int)((raw >> 32) & 0xFFFFFFFF);
 	}
 	
-	public long getLowBytes() {
+	public int getLowBytes() {
 		return this.lowBytes;
 	}
 	
-	public long getHighBytes() {
+	public int getHighBytes() {
 		return this.highBytes;
 	}
 

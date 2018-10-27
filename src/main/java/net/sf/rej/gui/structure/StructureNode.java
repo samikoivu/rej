@@ -17,57 +17,33 @@
 package net.sf.rej.gui.structure;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 
+import javax.swing.Action;
+import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.tree.TreeNode;
+import javax.swing.tree.DefaultMutableTreeNode;
 
-import net.sf.rej.util.Enumerator;
+public class StructureNode extends DefaultMutableTreeNode {
 
-public class StructureNode implements TreeNode {
-	private StructureNode parent = null;
-
+	private List<Action> actions = new ArrayList<Action>();
+	
 	public StructureNode() {
 	}
 
-	public int getChildCount() {
-		return getChildren().size();
-	}
-
-	public boolean getAllowsChildren() {
-		return true;
-	}
-
-	public boolean isLeaf() {
-		return getChildCount() == 0;
-	}
-
-	public void setParent(StructureNode node) {
-		this.parent = node;
-	}
-	
-	public TreeNode getParent() {
-		return this.parent;
-	}
-
-	public TreeNode getChildAt(int childIndex) {
-		return (TreeNode) getChildren().get(childIndex);
-	}
-
-	public int getIndex(TreeNode node) {
-		return getChildren().indexOf(node);
-	}
-
-	public Enumeration children() {
-		return new Enumerator(getChildren());
-	}
-
-	public List getChildren() {
-		return new ArrayList();
-	}
-
 	public JPopupMenu getContextMenu() {
+		if (this.actions.size() > 0) {
+			JPopupMenu contextMenu = new JPopupMenu();
+			for (Action action : this.actions) {
+				contextMenu.add(new JMenuItem(action));
+			}
+			return contextMenu;
+		}
 		return null;
 	}
+
+	public void addContextMenuItem(Action action) {
+		this.actions.add(action);
+	}
+
 }

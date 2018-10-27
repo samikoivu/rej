@@ -16,19 +16,17 @@
  */
 package net.sf.rej.gui.structure;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.rej.java.ClassFile;
 
-public class ClassFileNode extends StructureNode {
+public class ClassFileNode {
 
     private ClassFile cf;
     private List<StructureNode> subNodes;
 
     public ClassFileNode(ClassFile cf) {
         this.cf = cf;
-        refresh();
     }
 
     @Override
@@ -36,25 +34,4 @@ public class ClassFileNode extends StructureNode {
         return "Class " + this.cf.getFullClassName();
     }
 
-    @Override
-	public List getChildren() {
-        return this.subNodes;
-    }
-
-    public void refresh() {
-        this.subNodes = new ArrayList<StructureNode>();
-        this.subNodes.add(new MagicNode(this.cf));
-        this.subNodes.add(new VersionNode(this.cf));
-        this.subNodes.add(new ConstantPoolNode(this.cf));
-        this.subNodes.add(new AccessFlagsNode(this.cf));
-        this.subNodes.add(new ThisClassNode(this.cf));
-        this.subNodes.add(new SuperClassNode(this.cf));
-        this.subNodes.add(new InterfacesNode(this.cf));
-        this.subNodes.add(new FieldsNode(this.cf));
-        this.subNodes.add(new MethodsNode(this.cf));
-        this.subNodes.add(new AttributesNode(this.cf.getAttributes()));
-        for (StructureNode child : this.subNodes) {
-        	child.setParent(this);
-        }
-    }
 }

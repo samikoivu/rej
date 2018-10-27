@@ -18,6 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+
+import net.sf.rej.java.RandomAccessArray;
 
 /**
  * Store double into local variable 3.
@@ -82,6 +85,13 @@ public class _dstore_3 extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("value", StackElementType.DOUBLE));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		lvs.put(3, stack.pop());
 	}
 
 }

@@ -16,40 +16,21 @@
  */
 package net.sf.rej.gui.structure;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.rej.java.ClassFile;
-import net.sf.rej.java.Method;
 
-public class MethodsNode extends StructureNode {
+public class MethodsNode {
 	private ClassFile cf;
 	private List<MethodNode> methods;
 
 	public MethodsNode(ClassFile cf) {
 		this.cf = cf;
-		refresh();
 	}
 
 	@Override
 	public String toString() {
 		return "Class Methods (" + this.cf.getMethods().size() + ")";
-	}
-
-	public void refresh() {
-		this.methods = new ArrayList<MethodNode>();
-		List list = this.cf.getMethods();
-		for (int i = 0; i < list.size(); i++) {
-			Method method = (Method) list.get(i);
-			MethodNode methodNode = new MethodNode(this.cf, method);
-			methodNode.setParent(this);
-			this.methods.add(methodNode);
-		}
-	}
-
-	@Override
-	public List getChildren() {
-		return this.methods;
 	}
 
 }

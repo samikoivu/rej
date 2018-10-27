@@ -78,6 +78,7 @@ import net.sf.rej.java.constantpool.ConstantPoolInfo;
 import net.sf.rej.java.constantpool.DoubleInfo;
 import net.sf.rej.java.constantpool.FloatInfo;
 import net.sf.rej.java.constantpool.IntegerInfo;
+import net.sf.rej.java.constantpool.InvokeDynamicInfo;
 import net.sf.rej.java.constantpool.LongInfo;
 import net.sf.rej.java.constantpool.RefInfo;
 import net.sf.rej.java.constantpool.StringInfo;
@@ -86,19 +87,21 @@ import net.sf.rej.java.instruction.DecompilationContext;
 import net.sf.rej.java.instruction.Instruction;
 import net.sf.rej.java.instruction.Label;
 import net.sf.rej.java.instruction.Parameters;
+import net.sf.rej.java.instruction._invokespecial;
+import net.sf.rej.java.instruction._invokevirtual;
 import net.sf.rej.java.instruction._newarray;
 
 /**
  * Class provides transformation from EditorRow objects into syntax highlighted
  * text (whether the text is made available as text or graphics is up to the
  * <code>JavaBytecodeSyntaxDrawer</code> class given as a parameter.
- * 
+ *
  * @author Sami Koivu
  */
 public class BytecodeRenderer {
-	
+
 	private static final Logger logger = Logger.getLogger(BytecodeRenderer.class.getName());
-	
+
 	public void render(EditorRow er, JavaBytecodeSyntaxDrawer sd, Imports ia) {
         if (er instanceof PackageDefRow) {
             PackageDefRow pdr = (PackageDefRow)er;
@@ -123,7 +126,7 @@ public class BytecodeRenderer {
             } else {
                 ClassFile cf = cdr.getClassFile();
                 ClassSignature classSig = null;
-                
+
         		boolean displayGenerics = SystemFacade.getInstance().getPreferences().isSettingTrue(Settings.DISPLAY_GENERICS);
                 if (displayGenerics) {
                 	SignatureAttribute signature = cf.getAttributes().getSignatureAttribute();
@@ -131,7 +134,7 @@ public class BytecodeRenderer {
                 		classSig = Signatures.getClassSignature(signature.getSignatureString());
                 	}
                 }
-                
+
                 String access = cf.getAccessString();
                 if (access.length() > 0) {
                     sd.drawKeyword(access + " ");
@@ -149,16 +152,16 @@ public class BytecodeRenderer {
 
                 sd.drawDefault(cf.getShortClassName());
                 String superClass = cf.getSuperClassName();
-                
+
                	if (classSig != null) {
                    	renderFormalTypeParameters(sd, ia, classSig.getFormalTypeParameters());
                 }
-               	
+
                	sd.drawDefault(" ");
-                
+
                 if (superClass != null) {
                 	boolean displayExtendsObject = SystemFacade.getInstance().getPreferences().isSettingTrue(Settings.DISPLAY_EXTENDS_OBJECT);
-                	if (!superClass.equals("java.lang.Object") || 
+                	if (!superClass.equals("java.lang.Object") ||
                 		displayExtendsObject) {
                 		sd.drawKeyword("extends ");
                 		if (classSig == null) {
@@ -193,7 +196,7 @@ public class BytecodeRenderer {
                     		} else {
                     			sd.drawDefault(", ");
                     		}
-                			renderGenericJavaType(sd, ia, intf);                    		
+                			renderGenericJavaType(sd, ia, intf);
                     	}
                     }
 
@@ -230,7 +233,7 @@ public class BytecodeRenderer {
             } else {
             	renderGenericJavaType(sd, ia, fieldSig.getType());
             }
-            
+
         	sd.drawDefault(" ");
 
             sd.drawField(f.getName());
@@ -254,7 +257,7 @@ public class BytecodeRenderer {
         		sd.drawIndent();
         		ann = ((FieldAnnotationDefRow)er).getAnnotation();
         	}
-        	
+
 	        sd.drawAnnotation("@" + ia.getShortName(ann.getName()));
 	        if (ann.getElementValueCount() > 0) {
 	        	sd.drawDefault("(");
@@ -284,6 +287,14 @@ public class BytecodeRenderer {
             } else {
                 Method m = mdr.getMethod();
 
+
+           		if (mdr.getOverriden() != null) {
+           			sd.drawOverriddenClue();
+                } else if (mdr.getImplemented() != null) {
+                	sd.drawImplementedClue();
+                }
+
+
                 MethodSignature methodSig = null;
                 boolean displayGenerics = SystemFacade.getInstance().getPreferences().isSettingTrue(Settings.DISPLAY_GENERICS);
                 if (displayGenerics) {
@@ -297,7 +308,7 @@ public class BytecodeRenderer {
                 if (access.length() > 0) {
                     sd.drawKeyword(access + " ");
                 }
-                
+
                	if (methodSig != null) {
                		List<FormalTypeParameter> typeParams = methodSig.getFormalTypeParameters();
                    	renderFormalTypeParameters(sd, ia, typeParams);
@@ -305,7 +316,7 @@ public class BytecodeRenderer {
                			sd.drawKeyword(" ");
                		}
                 }
-                
+
                 JavaType ret = m.getDescriptor().getReturn();
                 if (methodSig == null) {
                 	if (ret.isPrimitive()) {
@@ -318,7 +329,7 @@ public class BytecodeRenderer {
                 } else {
                 	renderGenericJavaType(sd, ia, methodSig.getReturnType());
                 }
-                
+
                 sd.drawDefault(" ");
 
                 if (m.isDeprecated()) {
@@ -380,7 +391,7 @@ public class BytecodeRenderer {
                     	} else {
                     		sd.drawDefault("p" + i);
                     	}
-                    	
+
                     } else {
                     	if (methodSig == null) {
                     		if (item.isPrimitive()) {
@@ -441,7 +452,7 @@ public class BytecodeRenderer {
             sd.drawDefault(lr.getLabel().getId() + ":");
         } else if (er instanceof CodeRow) {
             CodeRow cr = (CodeRow)er;
-            
+
             // execution row
             if (cr.isExecutionRow()) {
             	sd.setExecutionBackground();
@@ -450,7 +461,7 @@ public class BytecodeRenderer {
             if (cr.getBreakpoint() != null) {
             	sd.drawBreakpoint();
             }
-            
+
             // line identifier
             LineIdentifierMode mode = EditorFacade.getInstance().getLineIdentifierMode();
             switch (mode.getMode()) {
@@ -475,6 +486,18 @@ public class BytecodeRenderer {
         	sd.drawIndent();
         	sd.drawIndent();
             sd.drawInstruction(inst.getMnemonic());
+            if (inst instanceof _invokevirtual) {
+            	_invokevirtual invoke = (_invokevirtual) inst;
+            	if (invoke.callThis()) {
+            		sd.drawInstruction(".this");
+            	}
+            }
+            if (inst instanceof _invokespecial) {
+            	_invokespecial invoke = (_invokespecial) inst;
+            	if (invoke.callThis()) {
+            		sd.drawInstruction(".this");
+            	}
+            }
             Parameters params = inst.getParameters();
             for (int i = 0; i < params.getCount(); i++) {
                 try {
@@ -493,6 +516,12 @@ public class BytecodeRenderer {
                                 }
                             }
                             break;
+                        case TYPE_INVOKEDYNAMIC: {
+                        	int index = params.getInt(i);
+                            ConstantPoolInfo cpi = pool.get(index);
+                            renderInvokeDynamic(sd, ia, (InvokeDynamicInfo) cpi, index);
+                            break;
+                        }
                         case TYPE_CONSTANT_POOL_METHOD_REF: {
                         	int index = params.getInt(i);
                             ConstantPoolInfo cpi = pool.get(index);
@@ -597,7 +626,7 @@ public class BytecodeRenderer {
         } else {
             sd.drawDefault(ia.getShortName(baseType.getType()));
         }
-             
+
         List<TypeArgument> typeArgs = gjt.getTypeArguments();
         if (typeArgs.size() > 0) {
         	sd.drawDefault("<");
@@ -624,7 +653,7 @@ public class BytecodeRenderer {
         	}
         	sd.drawDefault(">");
         }
-        sd.drawDefault(baseType.getDimensions());		
+        sd.drawDefault(baseType.getDimensions());
 	}
 
 	private void renderConstant(JavaBytecodeSyntaxDrawer sd, ConstantPoolInfo cpi, int index) {
@@ -633,11 +662,11 @@ public class BytecodeRenderer {
 		if (mode == ConstantPoolTranslationMode.OFF || mode == ConstantPoolTranslationMode.HYBRID) {
 			sd.drawDefault("#" + index + ";");
 		}
-		
+
 		if (mode == ConstantPoolTranslationMode.HYBRID) {
 			sd.drawComment(" //");
 		}
-		
+
 		if (mode == ConstantPoolTranslationMode.TRANSLATION || mode == ConstantPoolTranslationMode.HYBRID) {
 			sd.drawDefault(cpi.getTypeString() + " ");
 			drawConstant(sd, cpi);
@@ -654,7 +683,7 @@ public class BytecodeRenderer {
 		if (mode == ConstantPoolTranslationMode.HYBRID) {
 			sd.drawComment(" //");
 		}
-		
+
 		if (mode == ConstantPoolTranslationMode.TRANSLATION || mode == ConstantPoolTranslationMode.HYBRID) {
 			JavaType jt = new JavaType(ci.getName());
 			sd.drawDefault(ia.getShortName(jt.getType()) + jt.getDimensions());
@@ -671,7 +700,7 @@ public class BytecodeRenderer {
 		if (mode == ConstantPoolTranslationMode.HYBRID) {
 			sd.drawComment(" //");
 		}
-		
+
 		if (mode == ConstantPoolTranslationMode.TRANSLATION || mode == ConstantPoolTranslationMode.HYBRID) {
 			Descriptor desc = ri.getDescriptor();
 			JavaType ret = desc.getReturn();
@@ -695,7 +724,7 @@ public class BytecodeRenderer {
 		if (mode == ConstantPoolTranslationMode.HYBRID) {
 			sd.drawComment(" //");
 		}
-		
+
 		if (mode == ConstantPoolTranslationMode.TRANSLATION || mode == ConstantPoolTranslationMode.HYBRID) {
 			Descriptor desc = ri.getDescriptor();
 			JavaType ret = desc.getReturn();
@@ -724,7 +753,47 @@ public class BytecodeRenderer {
 			sd.drawDefault(")");
 		}
 	}
-  
+
+	private void renderInvokeDynamic(JavaBytecodeSyntaxDrawer sd, Imports ia, InvokeDynamicInfo ri, int index) {
+		ConstantPoolTranslationMode mode = EditorFacade.getInstance().getConstantPoolTranslationMode();
+		sd.drawDefault(" ");
+		if (mode == ConstantPoolTranslationMode.OFF || mode == ConstantPoolTranslationMode.HYBRID) {
+			sd.drawDefault("#" + index + ";");
+		}
+
+		if (mode == ConstantPoolTranslationMode.HYBRID) {
+			sd.drawComment(" //");
+		}
+
+		if (mode == ConstantPoolTranslationMode.TRANSLATION || mode == ConstantPoolTranslationMode.HYBRID) {
+			Descriptor desc = ri.getDescriptor();
+			JavaType ret = desc.getReturn();
+			if (ret.isPrimitive()) {
+				sd.drawKeyword(ret.getType());
+			} else {
+				sd.drawDefault(ia.getShortName(ret.getType()));
+			}
+			sd.drawDefault(ret.getDimensions() + " " +
+		               "." +
+		               ri.getTargetName());
+			sd.drawDefault("(");
+			List al = desc.getParamList();
+			for (int j = 0; j < al.size(); j++) {
+				JavaType item = (JavaType) al.get(j);
+				if (j > 0) {
+					sd.drawDefault(", ");
+				}
+				if (item.isPrimitive()) {
+					sd.drawKeyword(item.getType());
+				} else {
+					sd.drawDefault(ia.getShortName(item.getType()));
+				}
+				sd.drawDefault(item.getDimensions());
+			}
+			sd.drawDefault(")");
+		}
+	}
+
     private void drawConstant(JavaBytecodeSyntaxDrawer sd, ConstantPoolInfo constant) {
     	switch (constant.getType()) {
     	case ConstantPoolInfo.DOUBLE:
@@ -763,10 +832,14 @@ public class BytecodeRenderer {
     		sd.drawString(si.getString());
     		sd.drawString("\"");
     		break;
+    	case ConstantPoolInfo.CLASS:
+    		ClassInfo ci = (ClassInfo) constant;
+    		sd.drawDefault(ci.getName());
+    		break;
     	}
 
     }
-    
+
     private void drawElementValue(JavaBytecodeSyntaxDrawer sd, ElementValue ev, Imports ia) {
     	if (ev instanceof ArrayValue) {
     		ArrayValue av = (ArrayValue)ev;
@@ -808,7 +881,7 @@ public class BytecodeRenderer {
 			if (mdr.isExecutionRow()) {
 				return new Color(255, 190, 190);
 			}
-			
+
 		}
 		return Color.white;
 	}

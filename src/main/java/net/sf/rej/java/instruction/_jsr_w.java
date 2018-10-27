@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.util.ByteSerializer;
 import net.sf.rej.util.ByteToolkit;
@@ -27,7 +28,7 @@ import net.sf.rej.util.ByteToolkit;
  * 
  * @author Sami Koivu
  */
-public class _jsr_w extends Instruction {
+public class _jsr_w extends Instruction implements Jumpable {
 
 	public static final int OPCODE = 0xc9;
 
@@ -107,6 +108,12 @@ public class _jsr_w extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("address", StackElementType.ADDRESS));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		stack.push(StackElement.valueOf(StackElementType.ADDRESS));
 	}
 
 }

@@ -22,12 +22,12 @@ import java.awt.Color;
 /**
  * Class used to draw syntax highlighted text into a graphics
  * object
- * 
+ *
  * @author Sami Koivu
  */
 
 public class HTMLSyntaxDrawer implements JavaBytecodeSyntaxDrawer {
-	
+
 	private StringBuilder sb = new StringBuilder();
 	/*
 	 * TODO: The syntaxing should be configurable
@@ -37,19 +37,19 @@ public class HTMLSyntaxDrawer implements JavaBytecodeSyntaxDrawer {
     private static final Color STRING_AND_FIELD = new Color(0, 0, 192);
     private static final Color COMMENT = new Color(63, 127, 95);
     private static final Color DEFAULT = Color.black;
-    
+
     private String escape(String str) {
     	return str.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
     }
-    
+
     public void drawIndent() {
     	sb.append("&nbsp;&nbsp;&nbsp;&nbsp;");
     }
-    
+
     private static String toBold(String str) {
     	return "<B>" + str + "</B>";
     }
-  
+
     private static String toColor(String str, Color c) {
 		int rgb = c.getRGB() & 0xFFFFFF;
 		String colorStr = ("00000" + Integer.toHexString(rgb));
@@ -99,14 +99,14 @@ public class HTMLSyntaxDrawer implements JavaBytecodeSyntaxDrawer {
         this.offset += this.fm.stringWidth(text);
          */
     }
-    
+
     public void drawLineBreak() {
     	this.sb.append("</BR>");
     }
 
 	public void setOffset(int offset) {
 	}
-	
+
 	public String getHTML() {
 		return this.sb.toString();
 	}
@@ -116,6 +116,14 @@ public class HTMLSyntaxDrawer implements JavaBytecodeSyntaxDrawer {
 	}
 
 	public void setExecutionBackground() {
+		// do nothing
+	}
+
+	public void drawImplementedClue() {
+		// do nothing
+	}
+
+	public void drawOverriddenClue() {
 		// do nothing
 	}
 

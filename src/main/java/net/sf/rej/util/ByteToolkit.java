@@ -44,7 +44,7 @@ public class ByteToolkit {
         int i = 0;
         while (i < length) {
             l <<= 8;
-            l += getByte(data[pos + length - i - 1]); // ugly reverse, but works
+            l += (data[pos + length - i - 1] & 0xFF); // ugly reverse, but works
             i++;
         }
         return l;
@@ -57,7 +57,7 @@ public class ByteToolkit {
             int i = 0;
             while (i < length) {
                 l <<= 8;
-                l += getByte(data[pos + i]); // ugly reverse, but works
+                l += (data[pos + i] & 0xFF); // ugly reverse, but works
                 i++;
             }
             return l;
@@ -66,7 +66,7 @@ public class ByteToolkit {
             int i = 0;
             while (i < length) {
                 l <<= 8;
-                l += getByte(data[pos + length - i - 1]); // ugly reverse, but
+                l += (data[pos + length - i - 1] & 0xFF); // ugly reverse, but
                                                          // works
                 i++;
             }
@@ -83,7 +83,7 @@ public class ByteToolkit {
             while (i < length) {
                 max <<= 8;
                 l <<= 8;
-                l += getByte(data[pos + i]); // ugly reverse, but works
+                l += (data[pos + i] & 0xFF); // ugly reverse, but works
                 i++;
             }
             long maxPos = max >> 1;
@@ -98,7 +98,7 @@ public class ByteToolkit {
             while (i < length) {
                 l <<= 8;
                 max <<= 8;
-                l += getByte(data[pos + length - i - 1]); // ugly reverse, but
+                l += (data[pos + length - i - 1] & 0xFF); // ugly reverse, but
                                                          // works
                 i++;
             }
@@ -108,13 +108,6 @@ public class ByteToolkit {
 
             return l;
         }
-    }
-
-    public static int getByte(byte b) {
-        int i = b;
-        if (b < 0)
-            i = 256 + b;
-        return i;
     }
 
     public static byte[] longToByteArray(long l) {
@@ -164,6 +157,25 @@ public class ByteToolkit {
             data[1] = (byte) ((l >> 8) & 0xFF);
             data[2] = (byte) ((l >> 16) & 0xFF);
             data[3] = (byte) ((l >> 24) & 0xFF);
+            return data;
+        }
+    }
+
+    public static byte[] intToFourBytes(int i, boolean bigEndian) {
+        if (bigEndian) {
+            byte[] data = new byte[4];
+            data[3] = (byte) (i & 0xFF);
+            data[2] = (byte) ((i >> 8) & 0xFF);
+            data[1] = (byte) ((i >> 16) & 0xFF);
+            data[0] = (byte) ((i >> 24) & 0xFF);
+            return data;
+
+        } else {
+            byte[] data = new byte[4];
+            data[0] = (byte) (i & 0xFF);
+            data[1] = (byte) ((i >> 8) & 0xFF);
+            data[2] = (byte) ((i >> 16) & 0xFF);
+            data[3] = (byte) ((i >> 24) & 0xFF);
             return data;
         }
     }
@@ -304,6 +316,20 @@ public class ByteToolkit {
         return true;
     }
 
+    public static boolean areEqual(byte[] bytes1, byte[] bytes2, int length) {
+    	if (bytes1.length < length || bytes2.length < length) {
+    		return false; // early return
+    	}
+
+        for (int i = 0; i < length; i++) {
+            // byte compare, early return
+            if (bytes1[i] != bytes2[i])
+                return false;
+        }
+
+        return true;
+    }
+
     private static MessageDigest md = null;
 
     public static byte[] getMD5(byte[] data) {
@@ -337,6 +363,24 @@ public class ByteToolkit {
 
             return md.digest();
         }
+    }
+
+	public static long getLong(byte[] data) {
+        return (((long)data[0] << 56) +
+                ((long)(data[1] & 255) << 48) +
+                ((long)(data[2] & 255) << 40) +
+                ((long)(data[3] & 255) << 32) +
+                ((long)(data[4] & 255) << 24) +
+                ((data[5] & 255) << 16) +
+                ((data[6] & 255) <<  8) +
+                ((data[7] & 255) <<  0));
+	}
+
+	public static int getInt(byte[] data) {
+        return (((data[0] & 255) << 24) +
+        ((data[1] & 255) << 16) +
+        ((data[2] & 255) <<  8) +
+        ((data[3] & 255) <<  0));
     }
 
 }

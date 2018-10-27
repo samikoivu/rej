@@ -18,7 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
+import net.sf.rej.java.RandomAccessArray;
 import net.sf.rej.util.ByteSerializer;
 import net.sf.rej.util.ByteToolkit;
 
@@ -105,6 +107,14 @@ public class _instanceof extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("result", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		assertType(stack.pop(), StackElementType.REF);
+		stack.push(StackElement.valueOf(StackElementType.INT));
 	}
 
 }

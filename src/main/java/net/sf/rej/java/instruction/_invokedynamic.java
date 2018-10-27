@@ -16,20 +16,25 @@
  */
 package net.sf.rej.java.instruction;
 
+import net.sf.rej.util.ByteSerializer;
+import net.sf.rej.util.ByteToolkit;
+
 /**
  * Undefined instruction 0xBA.
  * 
  * @author Sami Koivu
  */
-public class _xxxunusedxxx extends Instruction {
+public class _invokedynamic extends Instruction {
 
 	public static final int OPCODE = 0xba;
 
-	public static final String MNEMONIC = "xxxunusedxxx";
+	public static final String MNEMONIC = "invokedynamic";
 
-	private static final int SIZE = 1;
+	private static final int SIZE = 5;
 
-	public _xxxunusedxxx() {
+	private int index = 0;
+
+	public _invokedynamic() {
 	}
 
 	@Override
@@ -52,26 +57,38 @@ public class _xxxunusedxxx extends Instruction {
 	}
 
 	@Override
-	public byte[] getData(DecompilationContext dc) {
-		return new byte[] { (byte) OPCODE };
+	public void setData(byte[] data, DecompilationContext dc) {
+		this.index = (int) ByteToolkit.getLong(data, 1, 2, true);
+		ByteToolkit.getLong(data, 3, 2, true); // zeros, might as well not read them, just a sanity check
 	}
 
 	@Override
-	public Parameters getParameterTypes() {
-		return Parameters.EMPTY_PARAMS;
+	public byte[] getData(DecompilationContext dc) {
+		ByteSerializer ser = new ByteSerializer(true);
+		ser.addByte(OPCODE);
+		ser.addShort(this.index);
+		ser.addByte(0);
+		ser.addByte(0);
+		return ser.getBytes();
 	}
 
 	@Override
 	public Parameters getParameters() {
-		return Parameters.EMPTY_PARAMS;
+		Parameters params = getParameterTypes();
+		params.addValue(this.index);
+		return params;
 	}
 
 	@Override
-	public void setData(byte[] data, DecompilationContext dc) {
+	public Parameters getParameterTypes() {
+		return new Parameters(new ParameterType[] {
+				ParameterType.TYPE_INVOKEDYNAMIC,
+				});
 	}
 
 	@Override
 	public void setParameters(Parameters params) {
+		this.index = params.getInt(0);
 	}
 
 }

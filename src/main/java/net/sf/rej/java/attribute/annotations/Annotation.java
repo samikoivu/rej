@@ -33,6 +33,9 @@ public class Annotation {
 	private ConstantPool pool;
 	private int typeIndex;
 	private Map<Integer, ElementValue> elementValues;
+	
+	protected Annotation() {
+	}
 
 	public Annotation(ByteParser parser, ConstantPool pool) {
 		this.pool = pool;
@@ -100,7 +103,7 @@ public class Annotation {
 	}
 	
 	public int getElementValueCount() {
-		return this.elementValues.size();
+		return this.getElementValues().size();
 	}
 	
 	public Map<String, ElementValue> getElementValues() {

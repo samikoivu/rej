@@ -208,7 +208,7 @@ public class ConstantPoolTab extends JPanel implements Tabbable, EventObserver {
 				this.model.setRowCount(cp.size());
 				int i = 0;
 				for (ConstantPoolInfo cpi : cp) {
-					this.model.setValueAt(String.valueOf(i), i, 0);
+					this.model.setValueAt(String.valueOf(i) + " / 0x" + Integer.toString(i, 16), i, 0);
 					Wrapper<ConstantPoolInfo> wrapper = new Wrapper<ConstantPoolInfo>();
 					wrapper.setContent(cpi);
 					if (cpi == null) {
@@ -222,8 +222,8 @@ public class ConstantPoolTab extends JPanel implements Tabbable, EventObserver {
 					i++;
 				}
 
-				this.table.getColumnModel().getColumn(0).setMaxWidth(50);
-				this.table.getColumnModel().getColumn(0).setMinWidth(50);
+				this.table.getColumnModel().getColumn(0).setMaxWidth(80);
+				this.table.getColumnModel().getColumn(0).setMinWidth(80);
 				this.table.getColumnModel().getColumn(1).setMaxWidth(130);
 				this.table.getColumnModel().getColumn(1).setMinWidth(130);
 			}

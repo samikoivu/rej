@@ -18,6 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+
+import net.sf.rej.java.RandomAccessArray;
 
 /**
  * Add int.
@@ -90,6 +93,15 @@ public class _iadd extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("result", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		assertType(stack.pop(), StackElementType.INT);
+		assertType(stack.pop(), StackElementType.INT);
+		stack.push(StackElement.valueOf(StackElementType.INT));
 	}
 
 }

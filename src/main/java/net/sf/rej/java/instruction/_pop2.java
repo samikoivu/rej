@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Pop top two operand stack words.
@@ -84,6 +85,18 @@ public class _pop2 extends Instruction {
 		elements.add(new StackElement("value", StackElementType.ANY));			
 		elements.add(new StackElement("value", StackElementType.ANY));			
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		Object obj = stack.pop();
+		if (obj == StackElementType.LONG || obj == StackElementType.DOUBLE) {
+			// cat2
+		} else {
+			// cat1, pop another
+			stack.pop();
+		}
 	}
 
 }

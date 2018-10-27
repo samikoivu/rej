@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Swap top two operand stack words.
@@ -91,6 +92,15 @@ public class _swap extends Instruction {
 		elements.add(new StackElement("value1", StackElementType.ANY));
 		elements.add(new StackElement("value2", StackElementType.ANY));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		StackElement top = stack.pop();
+		StackElement second = stack.pop();
+		stack.push(top);
+		stack.push(second);
 	}
 
 }

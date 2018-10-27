@@ -18,7 +18,7 @@ package net.sf.rej.gui.structure;
 
 import net.sf.rej.java.ClassFile;
 
-public class SuperClassNode extends StructureNode {
+public class SuperClassNode {
 	private ClassFile cf;
 
 	public SuperClassNode(ClassFile cf) {

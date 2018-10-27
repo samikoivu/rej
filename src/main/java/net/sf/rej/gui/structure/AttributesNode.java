@@ -16,44 +16,22 @@
  */
 package net.sf.rej.gui.structure;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import net.sf.rej.java.attribute.Attribute;
 import net.sf.rej.java.attribute.Attributes;
 
-public class AttributesNode extends StructureNode {
+public class AttributesNode {
 	private Attributes attrs;
-	private List<AttributeNode> attributes;
 
 	public AttributesNode(Attributes attrs) {
 		this.attrs = attrs;
-		refresh();
 	}
 
 	@Override
 	public String toString() {
-		return "Attributes (" + this.attrs.getAttributes().size() + ")";
+		return "Attributes (" + attrs.getAttributes().size() + ")";
 	}
 
-	@Override
-	public List getChildren() {
-		return this.attributes;
-	}
-
-	public void refresh() {
-		this.attributes = new ArrayList<AttributeNode>();
-		List list = this.attrs.getAttributes();
-		for (int i = 0; i < list.size(); i++) {
-			Attribute attr = (Attribute) list.get(i);
-			AttributeNode attrNode = new AttributeNode(this.attrs, attr);
-			attrNode.setParent(this);
-			this.attributes.add(attrNode);
-		}
-	}
-	
-	public Attributes getAttributesObject() {
-		return this.attrs;
+	public Attributes getAttrs() {
+		return attrs;
 	}
 
 }

@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Load float from array.
@@ -90,6 +91,14 @@ public class _faload extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("value", StackElementType.FLOAT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.INT);
+		assertType(stack.pop(), StackElementType.REF);
+		stack.push(StackElement.valueOf(StackElementType.FLOAT));
 	}
 
 }

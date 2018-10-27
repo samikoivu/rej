@@ -21,9 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.List;
-import java.util.zip.CRC32;
 
-import net.sf.rej.util.IOToolkit;
+import net.sf.rej.util.Checksum;
 
 /**
  * <code>FileSet</code> objects model sets of files, such as a single file, a
@@ -31,7 +30,7 @@ import net.sf.rej.util.IOToolkit;
  * that the path elements of the files contained within a fileset must be
  * delimited by a forward slahs '/' in order for some of the other
  * funcionalities, such as refactoring to work.
- * 
+ *
  * @author Sami Koivu
  */
 public abstract class FileSet implements Serializable {
@@ -41,14 +40,14 @@ public abstract class FileSet implements Serializable {
 	/**
 	 * Get the contents of this file set, ie. the list of files that are
 	 * included in this set.
-	 * 
+	 *
 	 * @return List object contaning Strings representing filenames.
 	 */
 	public abstract List<String> getContentsList();
 
 	/**
 	 * Get the contents of file belonging in this set, identified by file.
-	 * 
+	 *
 	 * @param file
 	 *            String the file to get
 	 * @return byte array with the contents of the file
@@ -60,7 +59,7 @@ public abstract class FileSet implements Serializable {
 	/**
 	 * Return the name of the set. Being the filename of the archive, folder or
 	 * single file, etc.
-	 * 
+	 *
 	 * @return Name of the set.
 	 */
 	public abstract String getName();
@@ -68,7 +67,7 @@ public abstract class FileSet implements Serializable {
 	/**
 	 * Get an InputStream to contents of a file in this set, identified by file.
 	 * Should be preferred ahead of getData(String) particularly with big files.
-	 * 
+	 *
 	 * @param file
 	 *            String the file to get
 	 * @return InputStream to the contents of the file.
@@ -79,19 +78,22 @@ public abstract class FileSet implements Serializable {
 
 	/**
 	 * Get the length of the file in this set identified by file.
-	 * 
+	 *
 	 * @param file
 	 *            String name of the file whose size is requested.
 	 * @return long Size of the file
 	 * @throws IOException
 	 *             Underlying I/O caused an exception
 	 */
-	public abstract long getLength(String file) throws IOException;
+	@Deprecated
+	public final long getLength(String file) throws IOException {
+		throw new RuntimeException("Method not supported.");
+	}
 
 	/**
 	 * Close the FileSet. Free up resources. The contents of the FileSet cannot
 	 * be accessed again after calling close().
-	 * 
+	 *
 	 * @throws IOException
 	 *             I/O problem closing the FileSet
 	 */
@@ -100,7 +102,7 @@ public abstract class FileSet implements Serializable {
 	/**
 	 * Remove file denoted by filename from the set. The file is not actually
 	 * removed, but could be just marked for removal in the next serialization.
-	 * 
+	 *
 	 * @param filename
 	 *            String file to remove
 	 */
@@ -108,7 +110,7 @@ public abstract class FileSet implements Serializable {
 
 	/**
 	 * Add a file to the set. File will be identified by filename.
-	 * 
+	 *
 	 * @param filename
 	 *            String file to add
 	 */
@@ -119,7 +121,7 @@ public abstract class FileSet implements Serializable {
 
 	/**
 	 * Refresh the FileSet, loading the contents from the filesystem
-	 * 
+	 *
 	 * @throws IOException
 	 *             I/O problem during refresh
 	 */
@@ -128,27 +130,28 @@ public abstract class FileSet implements Serializable {
 	/**
 	 * A checksum of the fileset used to invalidate cached class indices for
 	 * fast searching.
-	 * 
+	 *
 	 * @return A checksum value.
 	 * @throws IOException A problem in the I/O processing.
 	 */
 	public long getChecksum() throws IOException {
 		List list = getContentsList();
-		CRC32 crc = new CRC32();
+		Checksum checksum = new Checksum();
 
 		for (int i = 0; i < list.size(); i++) {
 			String filename = (String) list.get(i);
 			InputStream is = getInputStream(filename);
-			IOToolkit.updateCRCWithStream(is, crc);
+			checksum.updateCRCWithStream(is);
+			is.close();
 		}
 
-		return crc.getValue();
+		return checksum.getChecksum();
 	}
 
 	public abstract void save(Modifications ms) throws IOException;
 
 	public abstract void saveAs(File file, Modifications ms) throws IOException;
-	
+
 	public abstract void removeAllFiles() throws IOException;
 
 	@Override
@@ -165,13 +168,13 @@ public abstract class FileSet implements Serializable {
 
 		return false;
 	}
-	
+
 	public void getContentsFrom(final FileSet fs) throws IOException {
 		this.removeAllFiles();
 		for (String contentFile : fs.getContentsList()) {
 			this.addFile(contentFile);
 		}
-		
+
 		this.save(new Modifications() {
 
 			public byte[] getData(String filename) throws IOException {
@@ -181,9 +184,9 @@ public abstract class FileSet implements Serializable {
 			public boolean isModified(String filename) {
 				return true;
 			}
-			
+
 		});
-		
+
 	}
 
 	public abstract String getClasspath(String mainClass);

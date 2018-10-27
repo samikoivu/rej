@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Store into short array.
@@ -84,6 +85,14 @@ public class _sastore extends Instruction {
 		elements.add(new StackElement("index", StackElementType.INT));
 		elements.add(new StackElement("value", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.INT);
+		assertType(stack.pop(), StackElementType.INT);
+		assertType(stack.pop(), StackElementType.REF);
 	}
 
 }

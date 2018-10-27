@@ -16,40 +16,18 @@
  */
 package net.sf.rej.gui.structure;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.sf.rej.java.ClassFile;
-import net.sf.rej.java.Field;
 
-public class FieldsNode extends StructureNode {
+public class FieldsNode {
 	private ClassFile cf;
-	private List<FieldNode> fields;
 
 	public FieldsNode(ClassFile cf) {
 		this.cf = cf;
-		refresh();
 	}
 
 	@Override
 	public String toString() {
 		return "Fields of class (" + this.cf.getFields().size() + ")";
-	}
-
-	public void refresh() {
-		this.fields = new ArrayList<FieldNode>();
-		List list = this.cf.getFields();
-		for (int i = 0; i < list.size(); i++) {
-			Field field = (Field) list.get(i);
-			FieldNode fieldNode = new FieldNode(this.cf, field);
-			fieldNode.setParent(this);
-			this.fields.add(fieldNode);
-		}
-	}
-
-	@Override
-	public List getChildren() {
-		return this.fields;
 	}
 
 }

@@ -18,6 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+
+import net.sf.rej.java.RandomAccessArray;
 
 /**
  * Store int into local variable 3.
@@ -85,6 +88,15 @@ public class _istore_3 extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("value", StackElementType.INT));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		StackElement val = stack.pop();
+		assertType(val, StackElementType.INT);
+		lvs.put(3, val);
 	}
 
 }

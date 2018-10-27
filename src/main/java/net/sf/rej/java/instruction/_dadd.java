@@ -18,9 +18,10 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
- * Add long.
+ * Add double.
  * 
  * @author Sami Koivu
  */
@@ -90,6 +91,14 @@ public class _dadd extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("result", StackElementType.DOUBLE));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		stack.pop();
+		stack.pop();
+		stack.push(StackElement.valueOf(StackElementType.DOUBLE));
 	}
 
 }

@@ -239,7 +239,7 @@ public class InstructionList {
 		list.add(new _invokestatic());
 		list.add(new _invokeinterface());
 		
-		list.add(new _xxxunusedxxx());
+		list.add(new _invokedynamic());
 		
 		list.add(new _new());
 		list.add(new _newarray());

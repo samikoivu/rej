@@ -22,7 +22,12 @@ INIT, // system init (accompanied by EventDispatcher)
 PROJECT_UPDATE, // a project has been opened (accompanied by Project or null if the project was closed)
 
 CLASS_OPEN, // a class has been opened (accompanied by ClassFile - and filename where appropriate)
+SERIALIZED_OPEN, // a serialized object has been opened
+DEX_OPEN, // dex file has been opened
+BINARY_XML_OPEN, // binary xml file has been opened
+RAW_OPEN, // a file of unknown type has been opened
 CLASS_UPDATE, // a change in the class that's currently open
+SERIALIZED_UPDATE, // a change in the serialized obj that's currently open
 CLASS_REPARSE, // the currently open class has been modified in a way that requires full reparsing of the class
 CLASS_PARSE_ERROR, // the class could not be parsed
 
@@ -40,5 +45,5 @@ DEBUG_STEP_INTO_REQUESTED, // step into was requested
 DEBUG_STEP_OVER_REQUESTED, // step over was requested
 DEBUG_STEP_OUT_REQUESTED, // step out was requested
 
-DISPLAY_PARAMETER_UPDATE // line identifier, etc
+DISPLAY_PARAMETER_UPDATE  // line identifier, etc
 }

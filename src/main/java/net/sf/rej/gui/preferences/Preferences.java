@@ -31,13 +31,13 @@ import java.util.Map;
 import net.sf.rej.gui.tab.Tab;
 
 public class Preferences {
-	
+
     private File preferencesFile;
-    
+
     private List<File> classPath = new ArrayList<File>();
     private Map<Tab, Boolean> tabStates = new HashMap<Tab, Boolean>();
     private Map<Settings, Object> settings = new HashMap<Settings, Object>();
-    
+
     public Preferences() {
     	setDefaultSettings();
 	}
@@ -46,6 +46,8 @@ public class Preferences {
     	this.settings.put(Settings.DISPLAY_EXTENDS_OBJECT, Boolean.FALSE);
     	this.settings.put(Settings.DISPLAY_GENERICS, Boolean.TRUE);
     	this.settings.put(Settings.DISPLAY_VARARGS, Boolean.TRUE);
+    	this.settings.put(Settings.DEEP_ARCHIVES, Boolean.FALSE);
+    	this.settings.put(Settings.DEEP_FOLDERS, Boolean.FALSE);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -64,13 +66,13 @@ public class Preferences {
             }
         }
     }
-    
+
     private Object eofAwareReadObject(ObjectInputStream ois, String descriptiveName) throws IOException, ClassNotFoundException {
         try {
         	return ois.readObject();
         } catch(EOFException eof) {
         	throw new RuntimeException("EOF on preferences file, element: " + descriptiveName + ".", eof);
-        }    	
+        }
     }
 
     public void setFile(File prefs) {
@@ -86,34 +88,38 @@ public class Preferences {
         oos.close();
         fos.close();
     }
-    
+
     public List<File> getClassPathList() {
     	return this.classPath;
     }
-    
+
     public void setClassPathList(List<File> classPath) {
     	this.classPath = classPath;
     }
-    
+
     public boolean isTabVisible(Tab tab) {
     	Boolean visible =  this.tabStates.get(tab);
     	return visible != null && visible.booleanValue();
     }
-    
+
     public void setTabVisibility(Tab tab, boolean visible) {
     	this.tabStates.put(tab, visible);
     }
-    
+
     public <T> T getSetting(Settings setting, Class<T> type) {
     	Object o = this.settings.get(setting);
     	return type.cast(o);
     }
-    
+
     public boolean isSettingTrue(Settings setting) {
     	return getSetting(setting, Boolean.class).booleanValue();
     }
 
 	public void setSetting(Settings setting, Boolean value) {
+		this.settings.put(setting, value);
+	}
+
+	public void setSetting(Settings setting, File value) {
 		this.settings.put(setting, value);
 	}
 

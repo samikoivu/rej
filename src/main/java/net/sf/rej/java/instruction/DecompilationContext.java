@@ -16,7 +16,10 @@
  */
 package net.sf.rej.java.instruction;
 
+import java.util.Stack;
+
 import net.sf.rej.java.Exceptions;
+import net.sf.rej.java.RandomAccessArray;
 import net.sf.rej.java.attribute.LocalVariableTableAttribute;
 import net.sf.rej.java.constantpool.ConstantPool;
 import net.sf.rej.util.ByteParser;
@@ -38,6 +41,10 @@ public class DecompilationContext {
 	private Exceptions exceptions = null;
 
 	LocalVariableTableAttribute lvtAttr;
+
+	private RandomAccessArray lvs;
+
+	private Stack<StackElement> stack;
 	
 	public DecompilationContext() {
 	}
@@ -105,6 +112,22 @@ public class DecompilationContext {
 		dc.parser = this.parser;
 		dc.position = 0;
 		return dc;
+	}
+
+	public void setStack(Stack<StackElement> stack) {
+		this.stack = stack;
+	}
+
+	public void setLocalVariables(RandomAccessArray lvs) {
+		this.lvs = lvs;
+	}
+	
+	public Stack<StackElement> getStack() {
+		return this.stack;
+	}
+	
+	public RandomAccessArray getLocalVariables() {
+		return this.lvs;
 	}
 
 }

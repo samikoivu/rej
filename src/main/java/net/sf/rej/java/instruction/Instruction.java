@@ -210,5 +210,36 @@ public abstract class Instruction {
 	public List<StackElement> getPoppedElements(DecompilationContext dc) {
 		return EMPTY_STACK_ELEMENT_LIST;
 	}
+	
+	public void preStackFlow(DecompilationContext dc) {
+		
+	}
 
+	public void stackFlow(DecompilationContext dc) {
+		// default action, do nothing
+	}
+	
+	public void postStackFlow(DecompilationContext dc) {
+		
+	}
+
+	public void assertType(StackElement obj, StackElementType type) {
+		// TODO: gotos mess up the logic sometimes
+		if (obj == null) return; // consider uninited ok
+		
+		if (obj.getType() == type) {
+//			System.err.println("OK " + getMnemonic() + " " + obj);
+			return;
+		}
+
+		if (type == StackElementType.REF) {
+			if (obj.getType() == StackElementType.NULL
+			 || obj.getType() == StackElementType.EXCEPTION) {
+//				System.err.println("OK " + getMnemonic() + " " + obj);
+				return;
+			}
+		}
+		
+		System.err.println("stack assertion error in (" + getMnemonic() + "); expected: " + type + " actual: " + obj);
+	}
 }

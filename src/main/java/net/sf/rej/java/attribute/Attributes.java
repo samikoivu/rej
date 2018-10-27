@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.rej.java.ClassContext;
 import net.sf.rej.java.constantpool.ConstantPool;
 import net.sf.rej.util.ByteParser;
 import net.sf.rej.util.ByteSerializer;
@@ -36,7 +37,16 @@ public class Attributes {
     public Attributes(ByteParser parser, ConstantPool pool) {
         int count = parser.getShortAsInt();
         for (int i = 0; i < count; i++) {
-            Attribute a = Attribute.getAttribute(parser, pool);
+            Attribute a = Attribute.getAttribute(parser, pool, ClassContext.NULL_CONTEXT, -1, -1);
+            this.attributes.add(a);
+        }
+
+    }
+
+    public Attributes(ByteParser parser, ConstantPool pool, ClassContext cc, int accessFlags, int descriptorIndex) {
+        int count = parser.getShortAsInt();
+        for (int i = 0; i < count; i++) {
+            Attribute a = Attribute.getAttribute(parser, pool, cc, accessFlags, descriptorIndex);
             this.attributes.add(a);
         }
 

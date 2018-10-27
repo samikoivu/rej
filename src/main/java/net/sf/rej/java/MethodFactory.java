@@ -23,7 +23,6 @@ import net.sf.rej.java.attribute.CodeAttribute;
 import net.sf.rej.java.attribute.ExceptionDescriptor;
 import net.sf.rej.java.attribute.ExceptionsAttribute;
 import net.sf.rej.java.constantpool.ConstantPool;
-import net.sf.rej.util.ByteParser;
 
 /**
  * A factory for creating <code>Method</code> objects.
@@ -36,10 +35,6 @@ public class MethodFactory {
     public MethodFactory() {
     }
 
-    public Method createMethod(ByteParser parser, ConstantPool pool) {
-        return new Method(parser, pool);
-    }
-
     public Method createMethod(ClassFile cf, AccessFlags accessFlags, int nameIndex, int descIndex, int codeAttrNameIndex, int maxStackSize, int maxLocals, int exAttrNameIndex, List<ExceptionDescriptor> exceptions) {
         ConstantPool cp = cf.getPool();
         Method method = new Method(cp);
@@ -49,8 +44,10 @@ public class MethodFactory {
         Attributes attributes = new Attributes();
         CodeAttribute ca = new CodeAttribute(codeAttrNameIndex, cp, maxStackSize, maxLocals);
         attributes.addAttribute(ca);
-        ExceptionsAttribute ea = new ExceptionsAttribute(exAttrNameIndex, cp, exceptions);
-        attributes.addAttribute(ea);
+        if (exceptions != null) {
+	        ExceptionsAttribute ea = new ExceptionsAttribute(exAttrNameIndex, cp, exceptions);
+	        attributes.addAttribute(ea);
+        }
         method.setAttributes(attributes);
         return method;
     }

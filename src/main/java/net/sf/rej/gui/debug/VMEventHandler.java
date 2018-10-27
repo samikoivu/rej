@@ -48,23 +48,23 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.StepRequest;
 
 public class VMEventHandler implements Runnable, EventObserver {
-	
+
 	private static final Logger logger = Logger.getLogger(VMEventHandler.class.getName());
-	
+
 	private VirtualMachine vm;
 	private boolean interrupted = false;
 	private EventDispatcher dispatcher = null;
 	private boolean suspended = false;
 	private ThreadReference currentThread = null;
 	private boolean suspendOnStartup = false;
-	
+
 	public VMEventHandler() {
 	}
-	
+
 	public void setVM(VirtualMachine vm) {
 		this.vm = vm;
 	}
-	
+
 	public void setSuspendOnStartup(boolean suspendOnStartup) {
 		this.suspendOnStartup = suspendOnStartup;
 	}
@@ -113,7 +113,7 @@ public class VMEventHandler implements Runnable, EventObserver {
 									}
 									dispatcher.notifyObservers(event);
 								}
-									
+
 							});
 						} else if (event instanceof ClassPrepareEvent) {
 							ClassPrepareEvent cpe = (ClassPrepareEvent) event;
@@ -142,14 +142,14 @@ public class VMEventHandler implements Runnable, EventObserver {
 		if (this.interrupted) {
 			this.vm.dispose();
 		}
-		
+
 		this.dispatcher.notifyObservers(new net.sf.rej.gui.event.Event(EventType.DEBUG_DETACH));
 	}
-	
+
 	public void setInterrupted(boolean interrupted) {
 		this.interrupted = interrupted;
 	}
-	
+
 	public void processEvent(net.sf.rej.gui.event.Event event) {
 		switch (event.getType()) {
 		case INIT:
@@ -215,6 +215,8 @@ public class VMEventHandler implements Runnable, EventObserver {
 		case DEBUG_THREAD_CHANGE_REQUESTED:
 		case DEBUG_STACK_FRAME_CHANGE_REQUESTED:
 		case DEBUG_STACK_FRAME_CHANGED:
+		case SERIALIZED_OPEN:
+		case RAW_OPEN:
 			// do nothing
 			break;
 		}

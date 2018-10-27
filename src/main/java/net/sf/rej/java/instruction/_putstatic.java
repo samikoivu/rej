@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.java.Descriptor;
 import net.sf.rej.java.JavaType;
@@ -116,6 +117,36 @@ public class _putstatic extends Instruction {
 			}
 		}
 		return elements;
+	}
+
+	
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+
+		StackElement value = stack.pop();
+		
+		RefInfo ri = (RefInfo) dc.getConstantPool().get(this.index);
+		Descriptor desc = ri.getDescriptor();
+		JavaType jt = desc.getReturn();
+		if (jt.getDimensionCount() > 0 || (!jt.isPrimitive())) {
+			// array or primitive are both refs
+			assertType(value, StackElementType.REF);
+			// Here is where we can deduce stuff about hierarcy
+			// if this is valid code, value IS-A jt
+		} else {
+			// primitive non-array
+			if (jt.getType().equals("long")) {
+				assertType(value, StackElementType.LONG);
+			} else if (jt.getType().equals("float")) {
+				assertType(value, StackElementType.FLOAT);
+			} else if (jt.getType().equals("double")) {
+				assertType(value, StackElementType.DOUBLE);
+			} else {
+				// boolean, byte, short, char and int are all of type int
+				assertType(value, StackElementType.INT);
+			}
+		}
 	}
 
 }

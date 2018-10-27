@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Store into reference array (..., arrayref, index -> ..., value).
@@ -86,4 +87,13 @@ public class _aastore extends Instruction {
 		return elements;
 	}
 	
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+
+		stack.pop(); // array
+		stack.pop(); // index
+		stack.pop(); // value
+	}
+
 }

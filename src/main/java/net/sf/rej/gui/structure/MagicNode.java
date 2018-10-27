@@ -22,7 +22,7 @@ import net.sf.rej.util.ByteToolkit;
 // TODO: Should allow changing of the magic with a list of predefined values
 //       and free entry for an arbitrary number
 
-public class MagicNode extends StructureNode {
+public class MagicNode {
 
     private ClassFile cf;
 

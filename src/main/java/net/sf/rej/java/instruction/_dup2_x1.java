@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Duplicate the top one or two operand stack values and insert two or three values down.
@@ -97,6 +98,27 @@ public class _dup2_x1 extends Instruction {
 		elements.add(new StackElement("value2", StackElementType.ANY));
 		elements.add(new StackElement("value1", StackElementType.ANY));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		StackElement top = stack.pop();
+		StackElement second = stack.pop();
+		if (top.getType() == StackElementType.LONG || top.getType() == StackElementType.DOUBLE) {
+			// cat 2
+			stack.push(top);
+			stack.push(second);
+			stack.push(top);			
+		} else {
+			// cat 1
+			StackElement third = stack.pop();
+			stack.push(second);
+			stack.push(top);
+			stack.push(third);
+			stack.push(second);
+			stack.push(top);			
+		}
 	}
 
 }

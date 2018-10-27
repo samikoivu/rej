@@ -18,13 +18,14 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
- * Return float from method.
+ * Return double from method.
  * 
  * @author Sami Koivu
  */
-public class _dreturn extends Instruction {
+public class _dreturn extends Instruction implements Returnable {
 
 	public static final int OPCODE = 0xaf;
 
@@ -82,6 +83,12 @@ public class _dreturn extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("value", StackElementType.DOUBLE));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		stack.pop();
 	}
 
 }

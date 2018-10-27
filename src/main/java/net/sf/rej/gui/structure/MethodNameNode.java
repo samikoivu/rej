@@ -18,7 +18,7 @@ package net.sf.rej.gui.structure;
 
 import net.sf.rej.java.Method;
 
-public class MethodNameNode extends StructureNode {
+public class MethodNameNode {
 	private Method method;
 
 	public MethodNameNode(Method method) {

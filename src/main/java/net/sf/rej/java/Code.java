@@ -19,14 +19,23 @@ package net.sf.rej.java;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.gui.InstructionHints;
 import net.sf.rej.java.attribute.LineNumberTableAttribute;
 import net.sf.rej.java.attribute.LocalVariableTableAttribute;
 import net.sf.rej.java.constantpool.ConstantPool;
+import net.sf.rej.java.constantpool.UTF8Info;
+import net.sf.rej.java.instruction.Branchable;
 import net.sf.rej.java.instruction.DecompilationContext;
 import net.sf.rej.java.instruction.Instruction;
+import net.sf.rej.java.instruction.Jumpable;
 import net.sf.rej.java.instruction.Label;
+import net.sf.rej.java.instruction.Returnable;
+import net.sf.rej.java.instruction.StackElement;
+import net.sf.rej.java.instruction.StackElementType;
+import net.sf.rej.java.instruction._athrow;
+import net.sf.rej.java.instruction._ret;
 import net.sf.rej.util.ByteParser;
 import net.sf.rej.util.ByteSerializer;
 
@@ -48,14 +57,20 @@ public class Code {
      */
     private LineNumberTableAttribute lineNumbers = null;
 
-    public Code(ByteParser parser, ConstantPool pool) {
+    public Code(ByteParser parser, ConstantPool pool, ClassContext cc, Exceptions exceptions, int accessFlags, int descriptorIndex, int maxStack, int maxLocals) {
         this.context = new DecompilationContext();
         this.context.setConstantPool(pool);
+        setExceptions(exceptions);
         InstructionSet set = InstructionSet.getInstance();
         this.context.setParser(parser);
         this.context.setPosition(0);
         DecompilationContext dc = createDecompilationContext();
         List<Label> labels = new ArrayList<Label>();
+        
+        // params to the rest of the local variables
+        UTF8Info info = (UTF8Info) pool.get(descriptorIndex);
+		Descriptor desc = new Descriptor(info.getValue());
+
         while (parser.hasMore()) {
             int opcode = parser.peekByte();
 
@@ -68,6 +83,7 @@ public class Code {
                 int size = instruction.getSize(dc);
                 byte[] data = parser.getBytes(size);
                 instruction.setData(data, dc);
+                
                 List<Label> al = instruction.getLabels();
                 if (al != null && al.size() > 0) {
                     labels.addAll(al);
@@ -80,7 +96,115 @@ public class Code {
                 e.printStackTrace();
             }
         }
+        
+        // Simulate stack flow: TODO: it should be possible to disable this as it's a tad slow and not always very necessary
+        if (false ) {
+	        // reset dc
+	        dc = createDecompilationContext();
+	
+	        
+	        // TODO: enforce/validate max stack size
+	        Stack<StackElement> stack = new Stack<StackElement>();
+	        // TODO: enforce/validate max locals
+	        RandomAccessArray lvs = new RandomAccessArray(maxLocals);
+	
+	        dc.setStack(stack);
+	        dc.setLocalVariables(lvs);
+	
+	        // "this" to local variable 0 for non-static methods
+	        int lvIndex = 0;
+	        if (!AccessFlags.isStatic(accessFlags)) {
+	            lvs.put(lvIndex++, StackElement.valueOf(cc.getClassName(), StackElementType.REF));
+	        }
+	
+			for (JavaType jt : desc.getParamList()) {
+				if (jt.getDimensionCount() > 0 || (!jt.isPrimitive())) {
+					// array or primitive are both refs
+		            lvs.put(lvIndex, StackElement.valueOf(jt.toString(),StackElementType.REF));
+		            lvIndex++;
+				} else {
+					// primitive non-array
+					if (jt.getType().equals("long")) {
+						// CAT2, two slots
+			            lvs.put(lvIndex, StackElement.valueOf(StackElementType.LONG));
+			            lvIndex += 2;
+					} else if (jt.getType().equals("float")) {
+			            lvs.put(lvIndex, StackElement.valueOf(StackElementType.FLOAT));
+			            lvIndex++;
+					} else if (jt.getType().equals("double")) {
+						// CAT2, two slots
+			            lvs.put(lvIndex, StackElement.valueOf(StackElementType.DOUBLE));
+			            lvIndex += 2;
+					} else {
+						// boolean, byte, short, char and int are all of type int
+			            lvs.put(lvIndex, StackElement.valueOf(jt.getType(), StackElementType.INT));
+			            lvIndex++;
+					}
+				}
+			}
+	
+	        
+			// iterate through all execution paths, storing the stack state for each pc, on reprocessing any pc, don't do it twice
+			// if the stack is the same
+			// do once from the beginning and do each of the exception handlers
 
+			
+			
+			
+			
+			
+			
+            // verify if an exception handlers starts at this PC and put the exception on stack
+            // TODO: might be worthwhile to optimize (ordered list and keep removing old exceptioninfos
+            exceptions:
+            for (ExceptionInfo ei : dc.getExceptions().getExceptionInfos()) {
+            	if (ei.getHandlerPc() == dc.getPosition()) {
+            		dc.getStack().push(StackElement.valueOf(ei.getType(), StackElementType.EXCEPTION));
+            		break exceptions;
+            	}
+            }
+
+			
+			
+			
+			
+			
+			
+			// TODO: figure out how the jsrs work
+			
+			// for each position we need to store 0 to n states (stack, lvs...)
+			State[] state = new State[this.code.size()]; // to save states for each instruction
+			
+			dc.setPosition(0);
+			int index = 0;
+			stackanalysis:
+			while (true) {
+		        try {
+		        	Instruction instruction = this.code.get(index);
+		        	if (instruction instanceof _athrow) {
+		        		
+		        	} else if (instruction instanceof _ret) {
+		        		
+		        	} else if (instruction instanceof Branchable) {
+		        		
+		        	} else if (instruction instanceof Returnable) {
+		        		
+		        	} else if (instruction instanceof Jumpable) {
+		        		
+		        	} else {
+		        		instruction.stackFlow(dc);
+		        		dc.incrementPosition(instruction);
+		        		index++;
+		        	}
+		        } catch(Exception e) {
+		        	e.printStackTrace();
+		        	break stackanalysis;
+		        }
+				
+			}
+        }
+
+		// process labels of jumps, scopes, exceptions, etc
         insertLabels(labels);
     }
 

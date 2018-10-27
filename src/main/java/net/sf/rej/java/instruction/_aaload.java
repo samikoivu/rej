@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Load reference from array.
@@ -92,4 +93,18 @@ public class _aaload extends Instruction {
 		elements.add(new StackElement("value", StackElementType.REF));
 		return elements;
 	}
+	
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		StackElement index = stack.pop();
+		StackElement array = stack.pop();
+		assertType(index, StackElementType.INT);
+		assertType(array, StackElementType.REF);
+		
+		String arrayType = array.getName();
+		String elementType = arrayType.substring(0, arrayType.length()-2); // remove one dimension []
+		stack.push(StackElement.valueOf(elementType, StackElementType.REF));
+	}
+
 }

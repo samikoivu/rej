@@ -49,6 +49,7 @@ import net.sf.rej.gui.action.RemoveFieldAction;
 import net.sf.rej.gui.action.RemoveInstructionAction;
 import net.sf.rej.gui.action.RemoveLastConstantPoolInfo;
 import net.sf.rej.gui.action.RemoveMethodAction;
+import net.sf.rej.gui.action.serialized.UpdateValueContentAction;
 import net.sf.rej.gui.editor.Breakpoint;
 import net.sf.rej.gui.editor.LineIdentifierMode;
 import net.sf.rej.gui.editor.iteration.FindClassDefinition;
@@ -110,11 +111,12 @@ import net.sf.rej.java.constantpool.StringInfo;
 import net.sf.rej.java.constantpool.UTF8Info;
 import net.sf.rej.java.instruction.Instruction;
 import net.sf.rej.java.instruction.Parameters;
+import net.sf.rej.java.serialized.Value;
 
 /**
  * <code>EditorFacade</code> class is a common entrance point for all actions
  * in the editor.
- * 
+ *
  * @author Sami Koivu
  */
 public class EditorFacade implements EventObserver {
@@ -125,9 +127,9 @@ public class EditorFacade implements EventObserver {
 
 	private String openFile = null;
 	private Project openProject = null;
-	
+
 	private Collection<Breakpoint> breakpoints = new HashSet<Breakpoint>();
-	
+
 	private EventDispatcher dispatcher;
 
 	private ConstantPoolTranslationMode cpTranslationMode = ConstantPoolTranslationMode.TRANSLATION;
@@ -170,7 +172,7 @@ public class EditorFacade implements EventObserver {
 			}
 
 		}
-		
+
 		SystemFacade.getInstance().performAction(ga);
 		this.dispatcher.notifyObservers(new Event(EventType.CLASS_UPDATE));
 	}
@@ -253,7 +255,7 @@ public class EditorFacade implements EventObserver {
 	public void removeLastConstantPoolItem(ConstantPool cp) {
 		RemoveLastConstantPoolInfo rlcpi = new RemoveLastConstantPoolInfo(cp);
 		SystemFacade.getInstance().performAction(rlcpi, this.openFile);
-		this.dispatcher.notifyObservers(new Event(EventType.CLASS_UPDATE));		
+		this.dispatcher.notifyObservers(new Event(EventType.CLASS_UPDATE));
 	}
 
 	public void modifyUTF8Info(UTF8Info info, String newValue) {
@@ -313,12 +315,12 @@ public class EditorFacade implements EventObserver {
 		this.lineMode.setMode(mode);
 		this.dispatcher.notifyObservers(new Event(EventType.DISPLAY_PARAMETER_UPDATE));
 	}
-	
+
 	public void setConstantPoolTranslationMode(ConstantPoolTranslationMode mode) {
 		this.cpTranslationMode  = mode;
-		this.dispatcher.notifyObservers(new Event(EventType.DISPLAY_PARAMETER_UPDATE));		
+		this.dispatcher.notifyObservers(new Event(EventType.DISPLAY_PARAMETER_UPDATE));
 	}
-	
+
 	public ConstantPoolTranslationMode getConstantPoolTranslationMode() {
 		return this.cpTranslationMode;
 	}
@@ -335,7 +337,7 @@ public class EditorFacade implements EventObserver {
 
 	public void findFieldRefs(String className, String fieldName, Descriptor desc) {
 		MainWindow.getInstance().getSearchTab().clear();
-		AbstractIteratorAgent iterator = new FindFieldRefs(className, fieldName, desc); 
+		AbstractIteratorAgent iterator = new FindFieldRefs(className, fieldName, desc);
 		iterator.setProgressMonitor(SystemFacade.getInstance()
 				.getProgressMonitor());
 		MainWindow.getInstance().setTab(Tab.SEARCH);
@@ -344,7 +346,7 @@ public class EditorFacade implements EventObserver {
 
 	public void findClassRefs(String className) {
 		MainWindow.getInstance().getSearchTab().clear();
-		AbstractIteratorAgent iterator = new FindClassRefs(className); 
+		AbstractIteratorAgent iterator = new FindClassRefs(className);
 		iterator.setProgressMonitor(SystemFacade.getInstance()
 				.getProgressMonitor());
 		MainWindow.getInstance().setTab(Tab.SEARCH);
@@ -357,7 +359,7 @@ public class EditorFacade implements EventObserver {
 			ClassIndex ci = SystemFacade.getInstance().getClassIndex();
 			ClassLocator cl = ci.getLocator(className);
 			if (cl != null && cl.getFileSet().equals(this.openProject.getFileSet())) {
-				ClassFile cf = SystemFacade.getInstance().getClassFile(cl);
+				ClassFile cf = (ClassFile) SystemFacade.getInstance().getClassFile(cl);
 				List methods = cf.getMethods();
 				Method method = null;
 				for (int i = 0; i < methods.size(); i++) {
@@ -392,7 +394,7 @@ public class EditorFacade implements EventObserver {
 			ClassIndex ci = SystemFacade.getInstance().getClassIndex();
 			ClassLocator cl = ci.getLocator(className);
 			if (cl != null && cl.getFileSet().equals(this.openProject.getFileSet())) {
-				ClassFile cf = SystemFacade.getInstance().getClassFile(cl);
+				ClassFile cf = (ClassFile) SystemFacade.getInstance().getClassFile(cl);
 				List fields = cf.getFields();
 				Field field = null;
 				for (int i = 0; i < fields.size(); i++) {
@@ -426,7 +428,7 @@ public class EditorFacade implements EventObserver {
 			ClassLocator cl = ci.getLocator(className);
 
 			if (cl != null && cl.getFileSet().equals(this.openProject.getFileSet())) {
-				ClassFile cf = SystemFacade.getInstance().getClassFile(cl);
+				ClassFile cf = (ClassFile) SystemFacade.getInstance().getClassFile(cl);
 				Link link = new Link();
 				link.setText("Class definition : " + cf.getFullClassName());
 				link.setAnchor(Link.ANCHOR_CLASS_DEF);
@@ -445,7 +447,7 @@ public class EditorFacade implements EventObserver {
 	public void findMethodDefinition(String className,
 			String methodName, Descriptor desc) {
 		MainWindow.getInstance().getSearchTab().clear();
-		AbstractIteratorAgent iterator = new FindMethodDefinition(className, methodName, desc); 
+		AbstractIteratorAgent iterator = new FindMethodDefinition(className, methodName, desc);
 		iterator.setProgressMonitor(SystemFacade.getInstance()
 				.getProgressMonitor());
 		MainWindow.getInstance().setTab(Tab.SEARCH);
@@ -464,7 +466,7 @@ public class EditorFacade implements EventObserver {
 
 	public void findClassDefinition(String className) {
 		MainWindow.getInstance().getSearchTab().clear();
-		AbstractIteratorAgent iterator = new FindClassDefinition(className); 
+		AbstractIteratorAgent iterator = new FindClassDefinition(className);
 		iterator.setProgressMonitor(SystemFacade.getInstance()
 				.getProgressMonitor());
 		MainWindow.getInstance().setTab(Tab.SEARCH);
@@ -524,7 +526,7 @@ public class EditorFacade implements EventObserver {
 
 			}
 		}
-		
+
 		getAnnotationTypeImports(imports, cf.getAttributes());
 		getSignatureImports(imports, cf.getAttributes());
 		for (Field field : cf.getFields()) {
@@ -532,7 +534,7 @@ public class EditorFacade implements EventObserver {
 			getDescriptorImports(imports, field.getDescriptor());
 			getSignatureImports(imports, field.getAttributes());
 		}
-		
+
 		for (Method method : cf.getMethods()) {
 			getAnnotationTypeImports(imports, method.getAttributes());
 			getDescriptorImports(imports, method.getDescriptor());
@@ -542,20 +544,20 @@ public class EditorFacade implements EventObserver {
 
 		return imports;
 	}
-    
+
     private static void getDescriptorImports(Imports imports, Descriptor desc) {
     	JavaType retType = desc.getReturn();
     	if (!retType.isPrimitive()) {
     		imports.addType(retType.getType());
     	}
-    	
+
     	for (JavaType param : desc.getParamList()) {
     		if (!param.isPrimitive()) {
     			imports.addType(param.getType());
     		}
     	}
     }
-    
+
     private static void getSignatureImports(Imports imports, Attributes attrs) {
     	SignatureAttribute attr = attrs.getSignatureAttribute();
     	if (attr != null) {
@@ -568,12 +570,12 @@ public class EditorFacade implements EventObserver {
     				}
     			}
     		}
-    		
+
     		List<GenericJavaType> methodParams = signature.getMethodParameters();
     		if (methodParams != null) {
         		for (GenericJavaType param : methodParams) {
         			getGenericJavaTypeImports(imports, param);
-        		}    			
+        		}
     		}
     		List<GenericJavaType> types = signature.getTypes();
     		for (GenericJavaType type : types) {
@@ -592,7 +594,7 @@ public class EditorFacade implements EventObserver {
 				getGenericJavaTypeImports(imports, (GenericJavaType) arg);
 			} else if (arg instanceof BoundTypeArgument) {
 				BoundTypeArgument bound = (BoundTypeArgument) arg;
-				getGenericJavaTypeImports(imports, bound.getBound());				
+				getGenericJavaTypeImports(imports, bound.getBound());
 			}
 		}
 	}
@@ -605,7 +607,7 @@ public class EditorFacade implements EventObserver {
         		List<GenericJavaType> types = sig.getTypes();
         		for (GenericJavaType type : types) {
         			getGenericJavaTypeImports(imports, type);
-        		}    			
+        		}
     		}
     	}
     }
@@ -620,19 +622,19 @@ public class EditorFacade implements EventObserver {
     		getAnnotationTypeImports(imports, attr.getAnnotations());
     	}
     }
-    
+
     private static void getAnnotationTypeImports(Imports imports, List<Annotation> annotations) {
     	for (Annotation annotation : annotations) {
     		getAnnotationTypeImports(imports, annotation);
     	}
     }
-    
+
     private static void getAnnotationTypeImports(Imports imports, Annotation annotation) {
 		imports.addType(annotation.getName());
 		for (Entry<String, ElementValue> entry : annotation.getElementValues().entrySet()) {
 			getAnnotationTypeImports(imports, entry.getValue());
 		}
-    	
+
     }
 
     private static void getAnnotationTypeImports(Imports imports, ElementValue ev) {
@@ -654,7 +656,7 @@ public class EditorFacade implements EventObserver {
     		getAnnotationTypeImports(imports, nested.getAnnotation());
     	}
     }
-    
+
     /**
      * Return a String describing a Method in this class, using the import automizer
      * given as a parameter.
@@ -697,7 +699,7 @@ public class EditorFacade implements EventObserver {
     /**
 	 * Return a String describing a Field in this class, using the import
 	 * automizer given as a parameter.
-	 * 
+	 *
 	 * @param imports Imports object for determining short names of types
 	 * @param desc object describing the type of the field
 	 * @param className name of the class.
@@ -748,7 +750,7 @@ public class EditorFacade implements EventObserver {
 		}
 		return null;
 	}
-	
+
 	public Collection<Breakpoint> getBreakpoints() {
 		return this.breakpoints;
 	}
@@ -761,10 +763,13 @@ public class EditorFacade implements EventObserver {
 		case PROJECT_UPDATE:
 			this.openProject = event.getProject();
 			break;
+		case SERIALIZED_OPEN:
+		case RAW_OPEN:
 		case CLASS_OPEN:
 			this.openFile = event.getFile();
 			break;
 		case CLASS_UPDATE:
+		case SERIALIZED_UPDATE:
 		case CLASS_REPARSE:
 		case CLASS_PARSE_ERROR:
 		case DISPLAY_PARAMETER_UPDATE:
@@ -784,6 +789,12 @@ public class EditorFacade implements EventObserver {
 			// do nothing
 			break;
 		}
+	}
+
+	public void setValueContained(Value val, Object valueContained) {
+		UpdateValueContentAction usca = new UpdateValueContentAction(val, valueContained);
+		SystemFacade.getInstance().performAction(usca, this.openFile);
+		this.dispatcher.notifyObservers(new Event(EventType.SERIALIZED_UPDATE));
 	}
 
 }

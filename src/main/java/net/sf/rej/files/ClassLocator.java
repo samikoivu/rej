@@ -20,10 +20,9 @@ import java.io.Serializable;
 
 
 public class ClassLocator implements Serializable {
-	public static final long serialVersionUID = 1;
+	public static final long serialVersionUID = 2;
 
-    private String shortName = null;
-    private String pkg = "";
+    private String fullName = null;
     private String file = null;
 
     /**
@@ -32,25 +31,27 @@ public class ClassLocator implements Serializable {
     transient private FileSet fileSet = null;
 
     public ClassLocator(String classLongName, FileSet fileSet, String file) {
+    	this.fullName = classLongName;
         this.fileSet = fileSet;
         this.file = file;
-        getData(classLongName);
-    }
-
-    private void getData(String longName) {
-        int lastDot = longName.lastIndexOf(".");
-        this.shortName = longName.substring(lastDot + 1);
-        if (lastDot != -1) {
-            this.pkg = longName.substring(0, lastDot);
-        }
     }
 
     public String getShortName() {
-        return this.shortName;
+    	int dot = this.fullName.lastIndexOf(".");
+    	if (dot == -1) {
+    		return this.fullName;
+    	} else {
+    		return this.fullName.substring(dot + 1);
+    	}
     }
 
     public String getPackage() {
-        return this.pkg;
+    	int dot = this.fullName.lastIndexOf(".");
+        if (dot == -1) {
+        	return "";
+        } else {
+        	return this.fullName.substring(0, dot);
+        }
     }
 
     public String getFile() {
@@ -71,11 +72,7 @@ public class ClassLocator implements Serializable {
     }
 
     public String getFullName() {
-        if (this.pkg.length() == 0) {
-            return getShortName();
-        } else {
-            return getPackage() + "." + getShortName();
-        }
+    	return this.fullName;
     }
 
     public String dumpDetails() {

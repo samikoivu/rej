@@ -18,13 +18,14 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Return reference from method.
  * 
  * @author Sami Koivu
  */
-public class _areturn extends Instruction {
+public class _areturn extends Instruction implements Returnable {
 
 	public static final int OPCODE = 0xb0;
 
@@ -82,6 +83,12 @@ public class _areturn extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("objectref", StackElementType.REF));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.REF);
 	}
 
 }

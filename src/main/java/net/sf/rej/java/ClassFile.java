@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.rej.gui.FileObject;
 import net.sf.rej.java.attribute.Attributes;
 import net.sf.rej.java.constantpool.ConstantPool;
 import net.sf.rej.java.constantpool.ConstantPoolInfo;
@@ -34,11 +35,11 @@ import net.sf.rej.util.Range;
  * either by parsing a byte array or a stream with <code>net.sf.rej.java.Disassembler
  * </code>, using the Constructor or using the <code>net.sf.rej.java.ClassFactory</code>
  * class.
- * 
+ *
  * @author Sami Koivu
  */
-public class ClassFile {
-	
+public class ClassFile implements FileObject {
+
 	/**
 	 * The default magic for comparison.
 	 */
@@ -55,21 +56,21 @@ public class ClassFile {
     private ConstantPool pool;
 
     /**
-     * The class-level access-flags of this class (public, protected, etc) 
+     * The class-level access-flags of this class (public, protected, etc)
      */
     private int accessFlags;
-    
+
     /**
      * An index to a ClassRef in the constant pool, defining this class.
      */
     private int thisClass;
-    
+
     /**
      * An index to a ClassRef in the constant pool, defining this class's
      * parent.
-     */    
+     */
     private int superClass;
-    
+
     /**
      * A list of interfaces implemented by this class.
      */
@@ -162,7 +163,7 @@ public class ClassFile {
     public ClassVersion getVersion() {
     	return this.version;
     }
-    
+
     /**
      * Sets the major and minor versions of this class.
      * @param version
@@ -202,7 +203,7 @@ public class ClassFile {
     public void add(Field field) {
     	this.fields.add(field);
     }
-    
+
     /**
      * Returns a read-only list of the interfaces implemented by this class.
      * The interfaces are returned as self-contained <code>net.sf.rej.java.Interface
@@ -383,7 +384,7 @@ public class ClassFile {
         // 4:
         ser.addShort(getMinorVersion());
         ser.addShort(getMajorVersion());
-        
+
         // 8:
         ser.addBytes(this.pool.getData());
 
@@ -417,19 +418,19 @@ public class ClassFile {
         ser.addBytes(this.attributes.getData());
         return ser.getBytes();
     }
-    
+
     public static enum OffsetTag {MAGIC, VERSION, MINOR_VERSION, MAJOR_VERSION,
     	CONSTANT_POOL, ACCESS_FLAGS, THIS_CLASS, SUPER_CLASS,
     	INTERFACE_COUNT, INTERFACE_DATA, FIELD_COUNT, FIELD_DATA,
     	METHOD_COUNT, METHOD_DATA, ATTRIBUTES}
-     
+
     /**
      * Returns a map of offsets of each significant element of the class file.
      * The offsets returned by this method are only valid until this
      * <code>ClassFile</code> object is modified. The keys in the map are
-     * of type <code>OffsetTag</code>, <code>Interface</code>, 
+     * of type <code>OffsetTag</code>, <code>Interface</code>,
      * <code>Field</code> and <code>Method</code>.
-     * 
+     *
      * @return a map of element offsets in class file data.
      */
     public Map<Object, Range> getOffsetMap() {
@@ -473,7 +474,7 @@ public class ClassFile {
         	fieldDataTotalSize += fieldSize;
         }
         fieldDataOffset.setSize(fieldDataTotalSize);
-        
+
     	map.put(OffsetTag.METHOD_COUNT, new Range(offset, 2));
     	offset += 2;
     	int methodDataTotalSize = 0;
@@ -486,9 +487,9 @@ public class ClassFile {
         	methodDataTotalSize += methodSize;
         }
         methodDataOffset.setSize(methodDataTotalSize);
-        
+
     	map.put(OffsetTag.ATTRIBUTES, new Range(offset, this.attributes.getData().length));
- 
+
     	return map;
     }
 
@@ -496,7 +497,7 @@ public class ClassFile {
      * Returns the short name of this class, in other words, the name without
      * the package definition part. For example, for the class <code>java.lang.String</code>
      * this method returns "String".
-     * 
+     *
      * @return the short name of the class.
      */
     public String getShortClassName() {
@@ -520,12 +521,12 @@ public class ClassFile {
      * this object. For example, for a <code>ClassFile</code> object modeling
      * the class <code>java.lang.String</code> this method will return
      * <code>"java.lang.Object"</code>.
-     * 
+     *
      * @return the full name of the super class of this class.
      */
     public String getSuperClassName() {
     	if (this.getSuperClass() == 0) return null;
-    	
+
         ConstantPoolInfo cpi = this.pool.get(this.getSuperClass());
         return cpi.getValue();
     }
@@ -533,7 +534,7 @@ public class ClassFile {
     /**
      * Returns the class-level access modifiers of the class modeled by this
      * object as a String. For example "public final".
-     * 
+     *
      * @return the class-level access modifers.
      */
     public String getAccessString() {
@@ -565,7 +566,7 @@ public class ClassFile {
         } else {
             return cn.substring(0, lastDot);
         }
-    }  
+    }
 
     /**
      * Removes the given method from this class. Since no equals method has
@@ -601,17 +602,17 @@ public class ClassFile {
 	 * can support class file formats of versions in the range 45.0 through 44+k.0
 	 * inclusive.
      * </blockquote>
-     *  
+     *
      * @return java version compability <code>String</code> such as "1.5".
      */
 	public String getJavaVersionCompabilityString() {
 		return this.version.getJavaVersionCompabilityString();
 	}
-	
+
 	/**
 	 * Checks for equality. At this moment the equality is checked by comparing
 	 * the fully qualified names of the two <code>ClassFile</code> objects.
-	 * 
+	 *
 	 * @param obj the object to compare to this object.
 	 * @return true if the class files refer to the same FQN.
 	 */
@@ -621,7 +622,7 @@ public class ClassFile {
 			return false;
 		}
 		ClassFile cf = (ClassFile)obj;
-		
+
 		/* TODO: Other than just checking the FQN, equals should be called
 		 * on each of the methods, fields and attributes as well.
 		 */

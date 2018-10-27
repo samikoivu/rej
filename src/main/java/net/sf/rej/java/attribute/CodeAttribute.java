@@ -20,6 +20,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.sf.rej.java.ClassContext;
 import net.sf.rej.java.Code;
 import net.sf.rej.java.Exceptions;
 import net.sf.rej.java.constantpool.ConstantPool;
@@ -36,6 +37,8 @@ public class CodeAttribute extends Attribute {
     private Exceptions exceptions;
 
     private Attributes attributes;
+	private int accessFlags;
+	private int descriptorIndex;
 
     public CodeAttribute(int nameIndex, ConstantPool pool) {
         super(nameIndex, pool);
@@ -98,7 +101,7 @@ public class CodeAttribute extends Attribute {
     }
     
     @Override
-    public void setPayload(byte[] data) {
+    public void setPayload(byte[] data, ClassContext cc) {
         ByteParser parser = new ByteArrayByteParser(data);
         parser.setBigEndian(true);
         this.maxStack = parser.getShortAsInt();
@@ -107,8 +110,8 @@ public class CodeAttribute extends Attribute {
         byte[] codeData = parser.getBytes(codeLength);
         ByteParser newParser = new ByteArrayByteParser(codeData);
         newParser.setBigEndian(true);
-        this.code = new Code(newParser, pool);
         this.exceptions = new Exceptions(parser, pool);
+        this.code = new Code(newParser, pool, cc, this.exceptions, this.accessFlags, this.descriptorIndex, this.maxStack, this.maxLocals);
         this.attributes = new Attributes(parser, pool);
         LineNumberTableAttribute lnAttr = this.attributes.getLineNumberTable();
         if (lnAttr != null) {
@@ -118,7 +121,6 @@ public class CodeAttribute extends Attribute {
         this.code.insertLabels(this.exceptions.getLabels());
         LocalVariableTableAttribute lvta = this.attributes.getLocalVariableTable();
         this.code.setLocalVariableTable(lvta);
-        this.code.setExceptions(this.exceptions);
         if (lvta != null) {
             this.code.insertLabels(lvta.getVariableLabels());
         }
@@ -163,6 +165,14 @@ public class CodeAttribute extends Attribute {
 
 	public void setCode(Code code) {
 		this.code = code;
+	}
+
+	public void setMethodAccessFlags(int accessFlags) {
+		this.accessFlags = accessFlags;
+	}
+
+	public void setMethodDescriptorIndex(int descriptorIndex) {
+		this.descriptorIndex = descriptorIndex;
 	}
 
 }

@@ -90,12 +90,15 @@ public class Disassembler {
             fields.add(f);
         }
         cf.setFields(fields);
+        
+        ClassContext cc = new ClassContext();
+        cc.setClassName(cf.getFullClassName());
 
         int methodCount = parser.getShortAsInt();
 
         List<Method> methods = new ArrayList<Method>(methodCount);
         for (int i = 0; i < methodCount; i++) {
-            Method method = new Method(parser, cf.getPool());
+            Method method = new Method(parser, cf.getPool(), cc);
             methods.add(method);
         }
         cf.setMethods(methods);

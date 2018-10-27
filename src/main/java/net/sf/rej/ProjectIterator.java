@@ -42,7 +42,7 @@ import net.sf.rej.java.instruction.Instruction;
 /**
  * Class that iterates through a <code>Project</code>, calling the Iterator agent for all the
  * components of the <code>Project</code>.
- * 
+ *
  * @author Sami Koivu
  */
 
@@ -77,12 +77,12 @@ public class ProjectIterator implements Runnable {
 		for(Object agent : this.agents) {
 			iterateOneAgent((IteratorAgent)agent);
 		}
-		
+
 		if (this.listener != null) {
 			this.listener.finished();
 		}
 	}
-	
+
 	private void iterateOneAgent(IteratorAgent agent) {
 		IterationContext ic = new IterationContext();
 		ic.setProject(this.project);
@@ -97,15 +97,15 @@ public class ProjectIterator implements Runnable {
 			if (!filename.endsWith(".class"))
 				continue;
 			try {
-				ClassFile cf = this.project.getClassFile(filename);
+				ClassFile cf = (ClassFile)this.project.getFile(filename);
 				ic.setCf(cf);
 				agent.processClass(ic, cf);
-				
+
 				ConstantPool cp = cf.getPool();
 				for (int i=0; i < cp.size(); i++) {
 					ConstantPoolInfo cpi = cp.get(i);
 					if (cpi != null) {
-						agent.processConstantPoolInfo(ic, cpi);						
+						agent.processConstantPoolInfo(ic, cpi);
 					}
 				}
 

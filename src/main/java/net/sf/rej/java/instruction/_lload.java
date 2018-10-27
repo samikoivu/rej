@@ -18,7 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
+import net.sf.rej.java.RandomAccessArray;
 import net.sf.rej.util.ByteSerializer;
 import net.sf.rej.util.ByteToolkit;
 
@@ -40,6 +42,10 @@ public class _lload extends Instruction implements Widenable {
 	private int index = 0;
 
 	public _lload() {
+	}
+	
+	public _lload(int localVariable) {
+		this.index = localVariable;
 	}
 
 	@Override
@@ -126,6 +132,15 @@ public class _lload extends Instruction implements Widenable {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("value", StackElementType.LONG));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		StackElement obj = lvs.get(this.index);
+		assertType(obj, StackElementType.LONG);
+		stack.push(obj);
 	}
 
 }

@@ -22,7 +22,7 @@ import java.io.InputStream;
 /**
  * A <code>ByteParser</code> subclass providing parsing of a stream
  * instead of a byte array (as is the case with ByteParser class).
- * 
+ *
  * @author Sami Koivu
  */
 public class StreamByteParser implements ByteParser {
@@ -32,7 +32,7 @@ public class StreamByteParser implements ByteParser {
 	 * can be determined.
 	 */
     private CountInputStream in;
-    
+
     /**
      * Holds the bigEndian mode of this parser.
      */
@@ -77,10 +77,10 @@ public class StreamByteParser implements ByteParser {
         return i;
     }
 
-	public long getInt() throws ParsingException {
+	public int getInt() throws ParsingException {
 		long l = ByteToolkit.getLong(getBytes(4), 0, 4, this.bigEndian);
 
-		return l;
+		return (int)l;
     }
 
     @Deprecated
@@ -117,5 +117,43 @@ public class StreamByteParser implements ByteParser {
             throw new ParsingException(ioe);
         }
     }
+
+	public long getLong() {
+		byte[] data = getBytes(8);
+		if (this.bigEndian == true) {
+			return (((long)data[0] << 56) +
+                ((long)(data[1] & 255) << 48) +
+                ((long)(data[2] & 255) << 40) +
+                ((long)(data[3] & 255) << 32) +
+                ((long)(data[4] & 255) << 24) +
+                ((data[5] & 255) << 16) +
+                ((data[6] & 255) <<  8) +
+                ((data[7] & 255) <<  0));
+		} else {
+			return (((long)data[7] << 56) +
+	                ((long)(data[6] & 255) << 48) +
+	                ((long)(data[5] & 255) << 40) +
+	                ((long)(data[4] & 255) << 32) +
+	                ((long)(data[3] & 255) << 24) +
+	                ((data[2] & 255) << 16) +
+	                ((data[1] & 255) <<  8) +
+	                ((data[0] & 255) <<  0));
+		}
+	}
+
+	public int getULEB128() {
+		throw new RuntimeException("Not Implemented");
+	}
+
+	public int peekInt() {
+        try {
+            this.in.mark(4);
+            int i = getInt();
+            this.in.reset();
+            return i;
+        } catch(IOException ioe) {
+            throw new ParsingException(ioe);
+        }
+	}
 
 }

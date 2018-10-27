@@ -16,7 +16,7 @@ public class LongInfo extends ConstantPoolInfo {
     	this.value = value;
     }
     
-    public LongInfo(long highBytes, long lowBytes, ConstantPool pool) {
+    public LongInfo(int highBytes, int lowBytes, ConstantPool pool) {
         super(LONG, pool);
         this.value = (highBytes << 32) + lowBytes;
     }
@@ -30,8 +30,8 @@ public class LongInfo extends ConstantPoolInfo {
 	public byte[] getData() {
         ByteSerializer ser = new ByteSerializer(true);
         ser.addByte(getType());
-        ser.addInt(this.value >> 32);
-        ser.addInt(this.value & 0xFFFFFFFFL);
+        ser.addInt((int)((this.value >> 32) & 0xFFFFFFFF));
+        ser.addInt((int)(this.value & 0xFFFFFFFF));
 
         return ser.getBytes();
     }

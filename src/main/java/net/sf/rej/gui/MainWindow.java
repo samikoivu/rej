@@ -20,12 +20,19 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Frame;
 import java.awt.GridLayout;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +66,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
 
+import net.sf.rej.Version;
 import net.sf.rej.files.ClassIndex;
 import net.sf.rej.files.ClassLocator;
 import net.sf.rej.files.Project;
@@ -78,6 +87,9 @@ import net.sf.rej.gui.split.ConstantPoolToHexSync;
 import net.sf.rej.gui.split.HexSplit;
 import net.sf.rej.gui.split.SplitMode;
 import net.sf.rej.gui.split.StructureToHexSync;
+import net.sf.rej.gui.tab.AnalysisTab;
+import net.sf.rej.gui.tab.AndroidDEXTab;
+import net.sf.rej.gui.tab.AndroidXMLTab;
 import net.sf.rej.gui.tab.CompareTab;
 import net.sf.rej.gui.tab.ConstantPoolTab;
 import net.sf.rej.gui.tab.DebugTab;
@@ -88,6 +100,8 @@ import net.sf.rej.gui.tab.InjectionTab;
 import net.sf.rej.gui.tab.NoDebugTab;
 import net.sf.rej.gui.tab.ObfuscationTab;
 import net.sf.rej.gui.tab.SearchTab;
+import net.sf.rej.gui.tab.SerializedTab;
+import net.sf.rej.gui.tab.StackTraceTab;
 import net.sf.rej.gui.tab.StructureTab;
 import net.sf.rej.gui.tab.Tab;
 import net.sf.rej.gui.tab.Tabbable;
@@ -97,12 +111,12 @@ import net.sf.rej.java.ClassFile;
  * Java Application entry point for running the reJ GUI.
  * In other words, the class with the main method. Also the
  * primary window of the GUI Editor.
- * 
+ *
  * @author Sami Koivu
  */
 public class MainWindow extends JFrame implements EventObserver {
     private static final long serialVersionUID = 1L;
-    
+
     private static final Logger logger = Logger.getLogger(MainWindow.class.getName());
 
     static MainWindow instance;
@@ -120,10 +134,10 @@ public class MainWindow extends JFrame implements EventObserver {
     JSplitPane splitPane = null;
     SplitMode split = SplitMode.NONE;
     HexSplit hexSplit = new HexSplit();
-    
+
     EventDispatcher dispatcher = new EventDispatcher();
 
-    JFileChooser fd = new JFileChooser();
+    JFileChooser fileChooser = new JFileChooser();
     private Project project = null;
 
     // Tabs
@@ -137,12 +151,96 @@ public class MainWindow extends JFrame implements EventObserver {
     private CompareTab compareTab = new CompareTab();
     private Tabbable debugTab = createDebugTab();
     private HexEditorTab hexTab = new HexEditorTab();
+    private StackTraceTab stackTraceTab = new StackTraceTab();
+    private SerializedTab serializedTab = new SerializedTab();
+    private AnalysisTab analysisTab  = new AnalysisTab();
+    private AndroidXMLTab androidXMLTab  = new AndroidXMLTab();
+    private AndroidDEXTab androidDEXTab  = new AndroidDEXTab();
 
     /**
      * Maps menu checkboxes to tabs, for setting tab visibility.
      */
 	Map<JCheckBoxMenuItem, Tab> viewCheckBoxes = new HashMap<JCheckBoxMenuItem, Tab>();
-    
+
+    private FileFilter reJProjectFileFilter = new FileFilter() {
+
+		@Override
+		public boolean accept(File f) {
+			String name = f.getName();
+			return name.endsWith(".jar")
+				|| name.endsWith(".apk")
+			    || name.endsWith(".ear")
+			    || name.endsWith(".war")
+			    || name.endsWith(".zip")
+			    || name.endsWith(".class")
+			    || f.isDirectory();
+		}
+
+		@Override
+		public String getDescription() {
+			return "reJ Project files (.apk, .ear, .war, .jar, .zip, .class)";
+		}
+
+    };
+
+    private DropTargetListener dndListener = new DropTargetAdapter() {
+
+		public void drop(DropTargetDropEvent dtde) {
+			try {
+				dtde.acceptDrop(dtde.getDropAction());
+				@SuppressWarnings("unchecked")
+				List<File> files = (List) dtde.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+				if (files.size() > 0) {
+					// TODO: reJ could open all of the files simultaneously
+					SystemFacade.getInstance().openFile(files.get(0));
+				}
+			} catch (UnsupportedFlavorException e) {
+				logger.finest("Unsupported DnD Flavor: " + e.getMessage());
+			} catch (IOException e) {
+				SystemFacade.getInstance().handleException(e);
+			}
+
+		}
+
+	};
+
+    private FileFilter archiveFileFilter = new FileFilter() {
+
+		@Override
+		public boolean accept(File f) {
+			String name = f.getName();
+			return name.endsWith(".jar")
+			    || name.endsWith(".apk")
+			    || name.endsWith(".ear")
+			    || name.endsWith(".war")
+			    || name.endsWith(".zip")
+   			    || f.isDirectory();
+
+		}
+
+		@Override
+		public String getDescription() {
+			return "Archive files (.apk, .ear, .war, .jar, .zip)";
+		}
+
+    };
+
+    private FileFilter classFileFilter = new FileFilter() {
+
+		@Override
+		public boolean accept(File f) {
+			String name = f.getName();
+			return name.endsWith(".class")
+			    || f.isDirectory();
+		}
+
+		@Override
+		public String getDescription() {
+			return "Class Files (.class)";
+		}
+
+    };
+
     private Action tabViewAction = new AbstractAction() {
     	public void actionPerformed(ActionEvent e) {
     		JCheckBoxMenuItem checkBox = (JCheckBoxMenuItem) e.getSource();
@@ -156,6 +254,7 @@ public class MainWindow extends JFrame implements EventObserver {
     				Preferences prefs = SystemFacade.getInstance().getPreferences();
     				prefs.setTabVisibility(tab, true);
     				prefs.save();
+    				setTab(tab);
     			} else if (!checkBox.isSelected() && tabVisible) {
     				// hide tab
     				hideTab(tabComponent);
@@ -171,12 +270,12 @@ public class MainWindow extends JFrame implements EventObserver {
 
     private Action newProjectAction = new AbstractAction("Project..") {
         public void actionPerformed(ActionEvent e) {
-        	MainWindow.this.fd.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        	MainWindow.this.fd.setDialogType(JFileChooser.SAVE_DIALOG);
-        	MainWindow.this.fd.setDialogTitle("Select Archive file to create");
-        	int i = MainWindow.this.fd.showDialog(instance, "Create");
+        	MainWindow.this.fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        	MainWindow.this.fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+        	MainWindow.this.fileChooser.setDialogTitle("Select Archive file to create");
+        	int i = MainWindow.this.fileChooser.showDialog(instance, "Create");
         	if (i == JFileChooser.APPROVE_OPTION) {
-        		SystemFacade.getInstance().createNewArchiveProject(MainWindow.this.fd.getSelectedFile());
+        		SystemFacade.getInstance().createNewArchiveProject(MainWindow.this.fileChooser.getSelectedFile());
         	}
         }
     };
@@ -195,19 +294,26 @@ public class MainWindow extends JFrame implements EventObserver {
 
     private Action openAction = new AbstractAction("Open..") {
         public void actionPerformed(ActionEvent e) {
-            MainWindow.this.fd
+            MainWindow.this.fileChooser
                     .setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            MainWindow.this.fd.setDialogType(JFileChooser.OPEN_DIALOG);
-            MainWindow.this.fd
+            MainWindow.this.fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
+            MainWindow.this.fileChooser
                     .setDialogTitle("Select java .class file, an archive or a folder.");
-            int i = MainWindow.this.fd.showDialog(instance, "Open");
+            int i = MainWindow.this.fileChooser.showDialog(instance, "Open");
             if (i == JFileChooser.APPROVE_OPTION) {
                 SystemFacade.getInstance().openFile(
-                        MainWindow.this.fd.getSelectedFile());
+                        MainWindow.this.fileChooser.getSelectedFile());
             }
         }
     };
 
+    private Action reloadAction = new AbstractAction("Refresh") {
+        public void actionPerformed(ActionEvent e) {
+        	SystemFacade.getInstance().refresh();
+        }
+    };
+
+    
     private Action saveAction = new AbstractAction("Save") {
         public void actionPerformed(ActionEvent e) {
             SystemFacade.getInstance().saveFile();
@@ -216,15 +322,16 @@ public class MainWindow extends JFrame implements EventObserver {
 
     private Action saveAsAction = new AbstractAction("Save as..") {
         public void actionPerformed(ActionEvent e) {
-            MainWindow.this.fd
-                    .setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            MainWindow.this.fd.setDialogType(JFileChooser.SAVE_DIALOG);
-            MainWindow.this.fd.setDialogTitle("Save class or file set.");
-            int i = MainWindow.this.fd.showDialog(instance, "Save");
-            if (i == JFileChooser.APPROVE_OPTION) {
-                SystemFacade.getInstance().saveFile(
-                        MainWindow.this.fd.getSelectedFile());
-            }
+        	if (SystemFacade.getInstance().isProjectOpen()) {
+        		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        		fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+        		fileChooser.setDialogTitle("Save class or file set.");
+        		int i = fileChooser.showDialog(instance, "Save");
+        		if (i == JFileChooser.APPROVE_OPTION) {
+        			SystemFacade.getInstance().saveFile(
+                        fileChooser.getSelectedFile());
+        		}
+        	}
         }
     };
 
@@ -260,13 +367,13 @@ public class MainWindow extends JFrame implements EventObserver {
         	}
         }
     };
-    
+
     private Action openTypeAction = new AbstractAction("Open Type..") {
         public void actionPerformed(ActionEvent e) {
         	if (MainWindow.this.project == null) {
         		return; // early return
         	}
-        	
+
         	ClassIndex ci = SystemFacade.getInstance().getClassIndex();
         	ClassChooseDialog ccd = new ClassChooseDialog(MainWindow.this, ci);
         	ccd.setTitle("Open Type..");
@@ -275,7 +382,7 @@ public class MainWindow extends JFrame implements EventObserver {
         	if (cl != null) {
         		try {
 					Event event = new Event(EventType.CLASS_OPEN);
-        			ClassFile cf = SystemFacade.getInstance().getClassFile(cl);
+        			ClassFile cf = (ClassFile) SystemFacade.getInstance().getClassFile(cl);
 					event.setClassFile(cf);
 					event.setFile(cl.getFile());
 					MainWindow.this.dispatcher.notifyObservers(event);
@@ -286,7 +393,7 @@ public class MainWindow extends JFrame implements EventObserver {
         	}
         }
     };
-    
+
     private Action goToAction = new AbstractAction("Go to..") {
         public void actionPerformed(ActionEvent e) {
             int selection = JOptionPane.showOptionDialog(MainWindow.this, "Go to..", "Go to..", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, new String[] {"Source line number", "pc offset"}, "Source line number");
@@ -313,7 +420,7 @@ public class MainWindow extends JFrame implements EventObserver {
             		}
             		break;
             }
-            
+
             if (link != null) {
             	SystemFacade.getInstance().goTo(link);
             }
@@ -390,7 +497,7 @@ public class MainWindow extends JFrame implements EventObserver {
 			split = SplitMode.SOURCE;
         }
     };
-    
+
     private Action cpTranslationOff = new AbstractAction("No translation") {
         public void actionPerformed(ActionEvent e) {
             EditorFacade.getInstance().setConstantPoolTranslationMode(ConstantPoolTranslationMode.OFF);
@@ -440,19 +547,25 @@ public class MainWindow extends JFrame implements EventObserver {
         }
     };
 
+    private Action aboutWindowAction = new AbstractAction("About reJ..") {
+        public void actionPerformed(ActionEvent e) {
+        	AboutWindow.invoke();
+        }
+    };
+
     private Action extendsObjectAction = new AbstractAction("Display \"extends Object\"") {
         public void actionPerformed(ActionEvent e) {
         	try {
         		Preferences prefs = SystemFacade.getInstance().getPreferences();
         		prefs.invertSetting(Settings.DISPLAY_EXTENDS_OBJECT);
         		prefs.save();
-        		dispatcher.notifyObservers(new Event(EventType.DISPLAY_PARAMETER_UPDATE));		
+        		dispatcher.notifyObservers(new Event(EventType.DISPLAY_PARAMETER_UPDATE));
         	} catch(Exception ex) {
         		SystemFacade.getInstance().handleException(ex);
         	}
         }
     };
-    
+
     private Action showGenericsAction = new AbstractAction("Display Generics") {
         public void actionPerformed(ActionEvent e) {
         	try {
@@ -484,31 +597,53 @@ public class MainWindow extends JFrame implements EventObserver {
     GridLayout gridLayout1 = new GridLayout();
 
     public MainWindow() {
-        super("reJ");
-        this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        
-        this.tabbedPane.addChangeListener(new ChangeListener() {
-        	Tabbable lastTab = null;
-			public void stateChanged(ChangeEvent e) {
-				if (lastTab != null) {
-					lastTab.leavingTab();
-				}
-				lastTab = (Tabbable) tabbedPane.getSelectedComponent();
-				if (lastTab != null) {
-					lastTab.enteringTab();
-				}
-			}
-        });
-        
-        this.fd.setFileHidingEnabled(false);
+        super();
+    }
+
+    private void init() {
         try {
+            SystemFacade.getInstance().setTitle();
+
+            // remember file dialog path
+            try {
+            	File path = SystemFacade.getInstance().getPreferences().getSetting(Settings.FILE_DIALOG_PATH, File.class);
+            	this.fileChooser.setCurrentDirectory(path);
+            } catch (Exception ex) {
+            	ex.printStackTrace();
+            }
+            
+        	DropTarget dt = new DropTarget();
+        	dt.addDropTargetListener(this.dndListener);
+        	this.setDropTarget(dt);
+            this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+            this.tabbedPane.addChangeListener(new ChangeListener() {
+            	Tabbable lastTab = null;
+    			public void stateChanged(ChangeEvent e) {
+    				if (lastTab != null) {
+    					lastTab.leavingTab();
+    				}
+    				lastTab = (Tabbable) tabbedPane.getSelectedComponent();
+    				if (lastTab != null) {
+    					lastTab.enteringTab();
+    				}
+    			}
+            });
+
+            // FileChooser, hidden files, filters
+            this.fileChooser.setFileHidingEnabled(false);
+            this.fileChooser.addChoosableFileFilter(this.reJProjectFileFilter);
+            this.fileChooser.addChoosableFileFilter(this.archiveFileFilter);
+            this.fileChooser.addChoosableFileFilter(this.classFileFilter);
+            this.fileChooser.setFileFilter(this.reJProjectFileFilter);
+
             this.addWindowListener(new WindowAdapter() {
                 @Override
 				public void windowClosing(WindowEvent we) {
                     SystemFacade.getInstance().exit();
                 }
             });
-            
+
             this.setJMenuBar(this.menuBar);
 
             this.setState(Frame.NORMAL);
@@ -529,7 +664,7 @@ public class MainWindow extends JFrame implements EventObserver {
             setVisible(true);
             pack();
             setExtendedState(Frame.MAXIMIZED_BOTH);
-            
+
             // register components to receive messages
             this.dispatcher.registerObserver(this);
             this.dispatcher.registerObserver(this.compareTab);
@@ -545,6 +680,11 @@ public class MainWindow extends JFrame implements EventObserver {
             this.dispatcher.registerObserver(this.structureTab);
             this.dispatcher.registerObserver(SystemFacade.getInstance());
             this.dispatcher.registerObserver(this.hexSplit);
+            this.dispatcher.registerObserver(this.serializedTab);
+            this.dispatcher.registerObserver(this.analysisTab);
+            this.dispatcher.registerObserver(this.androidXMLTab);
+            this.dispatcher.registerObserver(this.androidDEXTab);
+            
             
     		conditionalSetVisible(Tab.COMPARE);
         } catch (Exception e) {
@@ -568,6 +708,12 @@ public class MainWindow extends JFrame implements EventObserver {
         newMenu.add(this.newClassAction);
         this.fileMenu.add(newMenu);
         this.fileMenu.add(new JMenuItem(this.openAction));
+  
+        JMenuItem reloadMenu = new JMenuItem(this.reloadAction);
+        this.fileMenu.add(reloadMenu);
+        reloadMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,
+                InputEvent.CTRL_MASK));
+        
         JMenuItem item = new JMenuItem(this.saveAction);
         this.fileMenu.add(item);
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
@@ -612,14 +758,14 @@ public class MainWindow extends JFrame implements EventObserver {
 		this.menuBar.add(navigate);
 		item = new JMenuItem(this.openTypeAction);
 		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		navigate.add(item);            
+		navigate.add(item);
 		item = new JMenuItem(this.outlineAction);
 		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
 		navigate.add(item);
 		item = new JMenuItem(this.goToAction);
 		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_DOWN_MASK));
 		navigate.add(item);
-		
+
 		// View
 		JMenu view = new JMenu("View");
 		this.menuBar.add(view);
@@ -667,8 +813,9 @@ public class MainWindow extends JFrame implements EventObserver {
 			bg.add(btn);
 			split.add(btn);
 			btn = new JRadioButtonMenuItem(this.splitSourceAction);
-			bg.add(btn);
-			split.add(btn);
+			// TODO: uncomment once functionality is implemented
+			//bg.add(btn);
+			//split.add(btn);
 			view.add(split);
 		}
 		view.add(new JSeparator());
@@ -689,7 +836,7 @@ public class MainWindow extends JFrame implements EventObserver {
 			public boolean isSelected() {
 				Preferences prefs = SystemFacade.getInstance().getPreferences();
 				return prefs.getSetting(Settings.DISPLAY_GENERICS, Boolean.class).booleanValue();
-			}			
+			}
 		});
 		view.add(showGenerics);
 		// View / Show varargs
@@ -699,19 +846,19 @@ public class MainWindow extends JFrame implements EventObserver {
 			public boolean isSelected() {
 				Preferences prefs = SystemFacade.getInstance().getPreferences();
 				return prefs.getSetting(Settings.DISPLAY_VARARGS, Boolean.class).booleanValue();
-			}			
+			}
 		});
 		view.add(showVarargs);
 
-		
+
 		view.add(new JSeparator());
 
-		// View / Tabs		
+		// View / Tabs
 		JCheckBoxMenuItem box = new JCheckBoxMenuItem(tabViewAction);
 		box.setText(this.structureTab.getTabTitle());
 		view.add(box);
 		this.viewCheckBoxes.put(box, Tab.STRUCTURE);
-		
+
 		box = new JCheckBoxMenuItem(tabViewAction);
 		box.setText(this.hexTab.getTabTitle());
 		view.add(box);
@@ -746,12 +893,37 @@ public class MainWindow extends JFrame implements EventObserver {
 		box.setText(this.compareTab.getTabTitle());
 		view.add(box);
 		this.viewCheckBoxes.put(box, Tab.COMPARE);
-		
+
+		box = new JCheckBoxMenuItem(tabViewAction);
+		box.setText(this.stackTraceTab.getTabTitle());
+		view.add(box);
+		this.viewCheckBoxes.put(box, Tab.STACK_TRACE);
+
+		box = new JCheckBoxMenuItem(tabViewAction);
+		box.setText(this.serializedTab.getTabTitle());
+		view.add(box);
+		this.viewCheckBoxes.put(box, Tab.SERIALIZED_LIST);
+
+		box = new JCheckBoxMenuItem(tabViewAction);
+		box.setText(this.analysisTab.getTabTitle());
+		view.add(box);
+		this.viewCheckBoxes.put(box, Tab.ANALYSIS);
+
+		box = new JCheckBoxMenuItem(tabViewAction);
+		box.setText(this.androidXMLTab.getTabTitle());
+		view.add(box);
+		this.viewCheckBoxes.put(box, Tab.ANDROID_XML);
+
+		box = new JCheckBoxMenuItem(tabViewAction);
+		box.setText(this.androidDEXTab.getTabTitle());
+		view.add(box);
+		this.viewCheckBoxes.put(box, Tab.ANDROID_DEX);
+
 		for (JCheckBoxMenuItem chkBox : this.viewCheckBoxes.keySet()) {
 			chkBox.setSelected(false);
 		}
 
-		
+
 		// Tools
 		JMenu tools = new JMenu("Tools");
 		this.menuBar.add(tools);
@@ -759,6 +931,12 @@ public class MainWindow extends JFrame implements EventObserver {
 		tools.add(item);
 		item = new JMenuItem(this.compareAction);
 		tools.add(item);
+
+		// Help
+		JMenu help = new JMenu("Help");
+		this.menuBar.add(help);
+		item = new JMenuItem(this.aboutWindowAction);
+		help.add(item);
 	}
 
     public void updateRecentFilesMenu() {
@@ -774,7 +952,8 @@ public class MainWindow extends JFrame implements EventObserver {
         if (args.length > 0 && args[0].equalsIgnoreCase("-debug")) {
             Handler fh = new FileHandler("reJ.log");
             Logger.getLogger("net.sf.rej").addHandler(fh);
-        	Logger.getLogger("net.sf.rej").setLevel(Level.FINEST);        	
+        	Logger.getLogger("net.sf.rej").setLevel(Level.FINEST);
+        	Logger.getLogger("net.sf.rej").log(Level.FINEST, "Starting " + Version.VERSION_STRING + " in DEBUG mode.");
         } else if (args.length > 0 && args[0].equalsIgnoreCase("-nolog")) {
         	// no logging
         } else {
@@ -786,6 +965,7 @@ public class MainWindow extends JFrame implements EventObserver {
         SwingUtilities.invokeLater(new Runnable() {
     		public void run() {
     	        instance = new MainWindow();
+    	        instance.init();
     		}
     	});
     }
@@ -810,6 +990,15 @@ public class MainWindow extends JFrame implements EventObserver {
 		} else if (event.getType() == EventType.CLASS_OPEN && event.getFile() != null) {
 			insertConditionalTabs();
 			selectFileRelatedTab();
+		} else if (event.getType() == EventType.SERIALIZED_OPEN && event.getFile() != null) {
+			insertConditionalTabs();
+			setTab(Tab.SERIALIZED_LIST);
+		} else if (event.getType() == EventType.BINARY_XML_OPEN && event.getFile() != null) {
+			insertConditionalTabs();
+			setTab(Tab.ANDROID_XML);
+		} else if (event.getType() == EventType.DEX_OPEN && event.getFile() != null) {
+			insertConditionalTabs();
+			setTab(Tab.ANDROID_DEX);
 		} else if (event.getType() == EventType.DEBUG_STACK_FRAME_CHANGED) {
 			insertConditionalTabs();
 			setTab(Tab.EDITOR);
@@ -824,21 +1013,22 @@ public class MainWindow extends JFrame implements EventObserver {
 			this.getContentPane().validate();
     	}
     }
-	
+
 	private void insertControlTabs() {
 		ensureTabIsVisible(this.filesTab);
 		conditionalSetVisible(Tab.SEARCH);
 		conditionalSetVisible(Tab.DEBUG);
 	}
-	
+
 	private void insertConditionalTabs() {
 		conditionalSetVisible(Tab.STRUCTURE);
 		conditionalSetVisible(Tab.CONSTANTPOOL);
 		conditionalSetVisible(Tab.EDITOR);
 		conditionalSetVisible(Tab.HEX);
 		conditionalSetVisible(Tab.OBFUSCATION);
+		conditionalSetVisible(Tab.SERIALIZED_LIST);
 	}
-	
+
 	private void selectFileRelatedTab() {
 		if (this.tabbedPane.indexOfComponent(this.editorTab) != -1) {
 			setTab(Tab.EDITOR);
@@ -869,9 +1059,9 @@ public class MainWindow extends JFrame implements EventObserver {
 					set.getKey().setSelected(true);
 				}
 			}
-		}		
+		}
 	}
-	
+
     public Tabbable getSelectedTab() {
         return (Tabbable) this.tabbedPane.getSelectedComponent();
     }
@@ -906,17 +1096,17 @@ public class MainWindow extends JFrame implements EventObserver {
     public void setTab(Tab tab) {
     	Tabbable tabbable = getTab(tab);
     	ensureTabIsVisible(tabbable);
-        this.tabbedPane.setSelectedComponent((Component)tabbable);  	
+        this.tabbedPane.setSelectedComponent((Component)tabbable);
     }
-    
+
     public void hideTab(Tabbable tab) {
     	tabbedPane.remove((Component)tab);
     }
-    
+
     public boolean isTabVisible(Tab tab) {
     	return isTabVisible(getTab(tab));
     }
-    
+
     public boolean isTabVisible(Tabbable tab) {
     	return this.tabbedPane.indexOfComponent((Component)tab) != -1;
     }
@@ -943,19 +1133,41 @@ public class MainWindow extends JFrame implements EventObserver {
         	return this.compareTab;
         case DEBUG:
        		return this.debugTab;
+        case STACK_TRACE:
+       		return this.stackTraceTab;
+        case SERIALIZED_LIST:
+       		return this.serializedTab;
+        case ANALYSIS:
+       		return this.analysisTab;
+        case ANDROID_XML:
+       		return this.androidXMLTab;
+        case ANDROID_DEX:
+       		return this.androidDEXTab;
         }
-        
+
         return null;
     }
 
     public SearchTab getSearchTab() {
         return this.searchTab;
     }
-    
+
+    public AnalysisTab getAnalysisTab() {
+        return this.analysisTab;
+    }
+
+    public AndroidXMLTab getAndroidXMLTab() {
+        return this.androidXMLTab;
+    }
+
+    public AndroidDEXTab getAndroidDEXTab() {
+        return this.androidDEXTab;
+    }
+
     public HexEditorTab getHexTab() {
         return this.hexTab;
     }
-    
+
     public void populateToolbar() {
     	this.toolbar.removeAll();
         this.toolbar.add(this.openAction);
@@ -986,9 +1198,9 @@ public class MainWindow extends JFrame implements EventObserver {
 	public Tabbable getDebugTab() {
 		return this.debugTab;
 	}
-	
+
 	public EditorTab getEditorTab() {
-		return this.editorTab;		
+		return this.editorTab;
 	}
 
 	private JPanel getDebugPanel() {
@@ -996,7 +1208,7 @@ public class MainWindow extends JFrame implements EventObserver {
 			this.debugPanel = new DebugControlPanel();
 			this.dispatcher.registerObserver(this.debugPanel);
 		}
-		
+
 		return this.debugPanel;
 	}
 

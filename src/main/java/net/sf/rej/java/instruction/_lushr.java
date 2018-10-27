@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Logical shift right long.
@@ -81,7 +82,7 @@ public class _lushr extends Instruction {
 	public List<StackElement> getPoppedElements(DecompilationContext dc) {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("value1", StackElementType.LONG));
-		elements.add(new StackElement("value2", StackElementType.LONG));
+		elements.add(new StackElement("value2", StackElementType.INT));
 		return elements;
 	}
 
@@ -90,6 +91,14 @@ public class _lushr extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("result", StackElementType.LONG));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.INT);
+		assertType(stack.pop(), StackElementType.LONG);
+		stack.push(StackElement.valueOf(StackElementType.LONG));
 	}
 
 }

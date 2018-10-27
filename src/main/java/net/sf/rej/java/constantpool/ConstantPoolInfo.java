@@ -43,6 +43,9 @@ public abstract class ConstantPoolInfo {
     public static final int DOUBLE = 6;
     public static final int NAME_AND_TYPE = 12;
     public static final int UTF8 = 1;
+    public static final int METHOD_HANDLE = 15;
+    public static final int METHOD_TYPE = 16;
+    public static final int INVOKE_DYNAMIC = 18;
 
     private int tag;
 
@@ -75,14 +78,14 @@ public abstract class ConstantPoolInfo {
             int stringIndex = parser.getShortAsInt();
             return new StringInfo(stringIndex, pool);
         case INTEGER:
-            int i = (int) parser.getInt();
+            int i = parser.getInt();
             return new IntegerInfo(i, pool);
         case FLOAT:
-            int f = (int) parser.getInt();
+            int f = parser.getInt();
             return new FloatInfo(f, pool);
         case LONG:
-            long highBytes = parser.getInt();
-            long lowBytes = parser.getInt();
+            int highBytes = parser.getInt();
+            int lowBytes = parser.getInt();
             return new LongInfo(highBytes, lowBytes, pool);
         case DOUBLE:
             highBytes = parser.getInt();
@@ -96,6 +99,17 @@ public abstract class ConstantPoolInfo {
             int length = parser.getShortAsInt();
             byte[] bytes = parser.getBytes(length);
             return new UTF8Info(bytes, pool);
+        case METHOD_HANDLE:
+        	int referenceKind = parser.getByteAsInt();
+        	int referenceIndex = parser.getShortAsInt();
+        	return new MethodHandleInfo(referenceKind, referenceIndex, pool);
+        case METHOD_TYPE:
+        	descriptorIndex = parser.getShortAsInt();
+        	return new MethodTypeInfo(descriptorIndex, pool);
+        case INVOKE_DYNAMIC:
+        	int bootstrapMethodAttrIndex = parser.getShortAsInt();
+        	nameAndTypeIndex = parser.getShortAsInt();
+        	return new InvokeDynamicInfo(bootstrapMethodAttrIndex, nameAndTypeIndex, pool);
         default:
             byte[] asdf = parser.getBytes(32);
         	logger.warning("Unsupported/invalid constantpool entry: " + tag);

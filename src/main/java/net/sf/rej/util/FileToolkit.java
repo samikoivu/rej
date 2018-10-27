@@ -134,4 +134,23 @@ public class FileToolkit {
     	}
     }
 
+    /**
+     * Returns the first 4 bytes of the file specified, or if the file
+     * length is less then 4, the contents of the file.
+     * @param file the file whose magic is to be returned
+     * @return the magic (4 bytes)
+     * @throws IOException
+     */
+    public static byte[] peekMagic(File file) throws IOException {
+        FileInputStream fis = new FileInputStream(file);
+        int length = (int) file.length();
+
+        byte[] buf = new byte[Math.min(4, length)];
+
+        fis.read(buf);
+        fis.close();
+
+        return buf;
+    }
+
 }

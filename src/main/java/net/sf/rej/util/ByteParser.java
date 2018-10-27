@@ -18,7 +18,7 @@ package net.sf.rej.util;
 
 /**
  * Interface for reading binary data.
- * 
+ *
  * @author Sami Koivu
  */
 
@@ -42,7 +42,7 @@ public interface ByteParser {
 	 * @return the unsigned value of the next available byte.
 	 */
 	public int getByteAsInt();
-	
+
 	/**
 	 * Returns the unsigned value of the next two bytes available
 	 * in the parser as an <code>int</code>.
@@ -51,13 +51,13 @@ public interface ByteParser {
 	public int getShortAsInt();
 
 	// TODO: see if the type could be changed to int without side-effects
-	
+
 	/**
 	 * Returns the unsigned value of the next 4 bytes as a
 	 * <code>long</code>.
 	 * @return long value of the next 4 bytes.
 	 */
-	public long getInt();
+	public int getInt();
 
 	/**
 	 * Creates a new parser starting from the current position
@@ -82,7 +82,7 @@ public interface ByteParser {
 	 * Returns true if the end of the underlying data source has not
 	 * been reached yet. Not that the return of this method in no way
 	 * indicates that data is available for immediate reading, for
-	 * example of the underlying data source is a socket. 
+	 * example of the underlying data source is a socket.
 	 * @return boolean true if there is still more data available to
 	 * be read.
 	 */
@@ -102,9 +102,15 @@ public interface ByteParser {
 	 * other methods of this class, a value i will be consistently
 	 * returned every time. This method is identical to the method
 	 * {@link net.sf.rej.util.ByteParser#getByteAsInt()} other
-	 * than for the fact that the position is not advanced. 
+	 * than for the fact that the position is not advanced.
 	 * @return the unsigned value of the next available byte.
 	 */
 	public int peekByte();
+
+	public long getLong();
+
+	public int getULEB128();
+
+	public int peekInt();
 
 }

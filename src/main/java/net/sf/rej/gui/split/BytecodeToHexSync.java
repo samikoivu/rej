@@ -32,17 +32,21 @@ public class BytecodeToHexSync implements BytecodeSplitSynchronizer {
 	HexSplit hexEditor = null;
 	private Map<Object, Range> offsets = null;
 	private Map<Method, Map<Object, Range>> methodOffsets = null;
-	
+
 	public BytecodeToHexSync(HexSplit hexEditor) {
 		this.hexEditor = hexEditor;
 	}
-	
+
 	public void setOffsets(Map<Object, Range> offsets) {
 		this.offsets = offsets;
 		this.methodOffsets = new HashMap<Method, Map<Object, Range>>();
 	}
 
 	public void sync(EditorRow er) {
+		if (this.hexEditor.getHexEditor() == null) {
+			return;
+		}
+
 		if (er == null) {
 			this.hexEditor.getHexEditor().getSelectionModel().clearSelection();
 		} else {
@@ -53,7 +57,7 @@ public class BytecodeToHexSync implements BytecodeSplitSynchronizer {
 			} else if (er instanceof MethodDefRow) {
 				MethodDefRow mdr = (MethodDefRow) er;
 				Range offset = this.offsets.get(mdr.getMethod());
-				this.hexEditor.getHexEditor().getSelectionModel().setSelectedInverval(offset.getOffset(), offset.getOffset() + offset.getSize());					
+				this.hexEditor.getHexEditor().getSelectionModel().setSelectedInverval(offset.getOffset(), offset.getOffset() + offset.getSize());
 			} else if (er instanceof CodeRow) {
 				CodeRow cr = (CodeRow) er;
 				Method m = cr.getEnclosingMethodDef().getMethod();
@@ -69,13 +73,13 @@ public class BytecodeToHexSync implements BytecodeSplitSynchronizer {
 				DecompilationContext dc = ca.getCode().createDecompilationContext();
 				dc.setPosition(cr.getPosition());
 				int size = cr.getInstruction().getSize(dc);
-				
-				this.hexEditor.getHexEditor().getSelectionModel().setSelectedInverval(offset, offset + size);					
+
+				this.hexEditor.getHexEditor().getSelectionModel().setSelectedInverval(offset, offset + size);
 			} else {
 				this.hexEditor.getHexEditor().getSelectionModel().clearSelection();
 			}
 		}
-			
+
 		this.hexEditor.repaint();
 		this.hexEditor.getHexEditor().ensureSelectionIsVisible();
 	}

@@ -21,6 +21,7 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -115,6 +116,7 @@ import net.sf.rej.gui.split.BytecodeSplitSynchronizer;
 import net.sf.rej.java.AccessFlags;
 import net.sf.rej.java.ClassFactory;
 import net.sf.rej.java.ClassFile;
+import net.sf.rej.java.ClassHierarchy;
 import net.sf.rej.java.Code;
 import net.sf.rej.java.Descriptor;
 import net.sf.rej.java.Field;
@@ -145,21 +147,21 @@ import net.sf.rej.util.Range;
 /**
  * <code>EditorTab</code> is the bytecode editor. The editor itself is a
  * <code>JList</code> with a custom renderer.
- * 
+ *
  * @author Sami Koivu
  */
 
 public class EditorTab extends JPanel implements Tabbable, EventObserver, TransferComponent {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	ClassEditor classEditor = new ClassEditor(MainWindow.getInstance());
 	MethodEditor methodEditor = new MethodEditor(MainWindow.getInstance());
 	FieldEditor fieldEditor = new FieldEditor(MainWindow.getInstance());
 	private CaseInsensitiveMatcher lastSearch = null;
 	private String lastQueryString = null;
 	private InstructionHints hints = new InstructionHints();
-	
+
 	JPopupMenu codeContextMenu = new JPopupMenu();
 	JPopupMenu labelContextMenu = new JPopupMenu();
 	JPopupMenu methodContextMenu = new JPopupMenu();
@@ -196,9 +198,9 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 	};
 	DebugControlPanel debugPanel = null;
 	private JScrollPane editorScrollPane = new JScrollPane(this.list);
-	
+
 	private EventDispatcher dispatcher;
-	
+
 	private ClassFile cf;
 	private Map<Object, Range> offsets;
 	private BytecodeSplitSynchronizer sync = null;
@@ -352,6 +354,38 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 		}
 	};
 
+	private Action gotoParentMethodAction = new AbstractAction("Go to parent method") {
+		@SuppressWarnings("incomplete-switch")
+		public void actionPerformed(ActionEvent e) {
+			Object o = list.getSelectedValue();
+			if (o instanceof MethodDefRow) {
+				MethodDefRow mdr = (MethodDefRow) o;
+				MethodLocator overridden = mdr.getOverriden();
+				MethodLocator implemented = mdr.getImplemented();
+				if (overridden != null) {
+					Link link = new Link();
+		        	link.setText("Method definition");
+		        	link.setClassLocator(overridden.getClassLocator());
+		        	link.setAnchor(Link.ANCHOR_METHOD_DEF);
+		        	link.setFile(overridden.getClassLocator().getFile());
+		        	link.setTab(Tab.EDITOR);
+		        	link.setMethod(overridden.getMethod());
+		        	SystemFacade.getInstance().goTo(link);
+				} else if (implemented != null) {
+					Link link = new Link();
+		        	link.setText("Method definition");
+		        	link.setClassLocator(implemented.getClassLocator());
+		        	link.setAnchor(Link.ANCHOR_METHOD_DEF);
+		        	link.setFile(implemented.getClassLocator().getFile());
+		        	link.setTab(Tab.EDITOR);
+		        	link.setMethod(implemented.getMethod());
+		        	SystemFacade.getInstance().goTo(link);
+				}
+			}
+		}
+	};
+
+
 	private Action modifyAction = new AbstractAction("Modify..") {
 		public void actionPerformed(ActionEvent e) {
 			modifyRow();
@@ -489,7 +523,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 
 		this.add(this.label, BorderLayout.NORTH);
 		this.add(this.editorScrollPane, BorderLayout.CENTER);
-		
+
 		this.list.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e) {
 				splitSynchronize();
@@ -562,7 +596,8 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 		JMenu methodRefactoring = new JMenu("Refactoring");
 		methodRefactoring.add(new JMenuItem(this.refactorRenameAction));
 		this.methodContextMenu.add(methodRefactoring);
-		this.methodContextMenu.add(new JMenuItem(this.toggleBreakPointAction));
+		//this.methodContextMenu.add(new JMenuItem(this.toggleBreakPointAction));
+		this.methodContextMenu.add(new JMenuItem(this.gotoParentMethodAction));
 
 		// field definition context sensitive menu
 		this.fieldContextMenu.add(new JMenuItem(this.findRefsAction));
@@ -611,7 +646,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 				}
 				this.cf = event.getClassFile();
 			}
-			
+
 			if (this.isOpen && this.cf != null) {
 				load(this.cf);
 			} else {
@@ -647,6 +682,8 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 		case DEBUG_STACK_FRAME_CHANGE_REQUESTED:
 		case DEBUG_SUSPEND_REQUESTED:
 		case DEBUG_THREAD_CHANGED:
+		case SERIALIZED_OPEN:
+		case RAW_OPEN:
 			// do nothing
 			break;
 		}
@@ -655,12 +692,18 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 
 	private void load(ClassFile cf) {
 		// TODO: write a description of the hierarchy of elements in the table
-		
+
+		ClassHierarchy hierarchy = null;
+		try{
+			hierarchy = SystemFacade.getInstance().getClassHierarchy(cf);
+		} catch(IOException ioe) {
+			SystemFacade.getInstance().handleException(ioe);
+		}
 		this.offsets = cf.getOffsetMap();
 		if (this.sync != null) {
 			this.sync.setOffsets(this.offsets);
 		}
-		
+
 		this.rows = new ArrayList<EditorRow>();
 
 		// Package
@@ -683,7 +726,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 			this.rows.add(new BlankRow());
 			/* empty space between imports and class def */
 		}
-		
+
 		// Add some useful information as comments
 
 		// Source file name
@@ -692,7 +735,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 			ClassCommentRow sfComment = new ClassCommentRow("SourceFile = " + sf.getSourceFile());
 			this.rows.add(sfComment);
 		}
-		
+
 		// Class version
 	    ClassCommentRow versionComment = new ClassCommentRow("Class Version: " + cf.getMajorVersion() + "." + cf.getMinorVersion());
 	    this.rows.add(versionComment);
@@ -785,6 +828,20 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 			CodeAttribute codeAttr = attr.getCode();
 			MethodDefRow mdr = new MethodDefRow(cf, method, true,
 					codeAttr != null);
+
+        	if (hierarchy != null
+        	 && !method.getName().equals("<init>")
+             && !AccessFlags.isStatic(method.getAccessFlags())) {
+        		MethodLocator implemented = hierarchy.getImplemented(method);
+        		if (implemented != null) {
+        			mdr.setImplemented(implemented);
+        		}
+
+        		MethodLocator overridden = hierarchy.getOverridden(method);
+        		if (overridden != null) {
+        			mdr.setOverridden(overridden);
+        		}
+        	}
 			if (!deprecatedAnnotationAdded && method.isDeprecated()) {
 				DeprecatedAnnotationDefRow ddr = new DeprecatedAnnotationDefRow();
 				this.rows.add(ddr);
@@ -861,7 +918,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 		for (EditorRow er : rows) {
 			this.model.addElement(er);
 		}
-		
+
 		// mark as up to date
 		this.upToDate = true;
 	}
@@ -985,8 +1042,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 			List methods = this.classDef.getMethods();
 			for (int i = 0; i < methods.size(); i++) {
 				MethodDefRow mdr = (MethodDefRow) methods.get(i);
-				if (mdr.getMethod().getSignatureLine().equals(
-						link.getMethod().getSignatureLine())) {
+				if (mdr.getMethod().signatureMatches(link.getMethod())) {
 					int index = this.rows.indexOf(mdr);
 					this.list.setSelectedIndex(index);
 					this.list.ensureIndexIsVisible(index);
@@ -1020,7 +1076,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 		}
 		}
 	}
-	
+
 	private void modifyInstruction(int pc, Instruction instruction, LocalVariableTableAttribute lvAttr) {
 		InstructionEditor editor = new InstructionEditor();
 		editor.setPC(pc);
@@ -1035,7 +1091,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
             SystemFacade.getInstance().performAction(group);
 		}
 	}
-	
+
 	private void insertInstruction(MethodDefRow mdr, int pc, LocalVariableTableAttribute lvAttr, Code code) {
 		InstructionEditor editor = new InstructionEditor();
 		editor.setClassFile(this.cf);
@@ -1061,7 +1117,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
             SystemFacade.getInstance().performAction(group);
 		}
 	}
-	
+
 	private void modifyInstructionParameters(List choosers, GroupAction group, Instruction instruction) {
 		Parameters params = instruction.getParameters();
         for (int i = 0; i < params.getCount(); i++) {
@@ -1181,7 +1237,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 			LocalVariableTableAttribute lvAttr = null;
 			if (mdr.getMethod().getAttributes().getCode() != null) {
 				code = mdr.getMethod().getAttributes().getCode().getCode();
-				lvAttr = mdr.getMethod().getAttributes().getCode().getAttributes().getLocalVariableTable(); 
+				lvAttr = mdr.getMethod().getAttributes().getCode().getAttributes().getLocalVariableTable();
 			}
 			int pc = 0;
 			if (code != null && mdr.isClosing() && mdr.getCodeRows().size() > 0) {
@@ -1195,7 +1251,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 					pc += cr.getInstruction().getSize(dc);
 				}
 			}
-			
+
 			insertInstruction(mdr, pc, lvAttr, code);
 		}
 	}
@@ -1355,7 +1411,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 			}
 		}
 		this.lastSearch = null;
-		SystemFacade.getInstance().setStatus("No occurances of '" + query + "' found.");		
+		SystemFacade.getInstance().setStatus("No occurances of '" + query + "' found.");
 	}
 
 	public void findNext() {
@@ -1377,7 +1433,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 					return; // early return
 				}
 			}
-			SystemFacade.getInstance().setStatus("No more occurances of '" + this.lastQueryString + "' found.");		
+			SystemFacade.getInstance().setStatus("No more occurances of '" + this.lastQueryString + "' found.");
 		}
 	}
 
@@ -1461,7 +1517,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 									.copyInstruction(inst, cr
 											.getDecompilationContext()
 											.getConstantPool(), newPool);
-							
+
 							if (copy == null) {
 								throw new AssertionError("Copied instruction is null for instruction: " + inst);
 							}
@@ -1634,7 +1690,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 			}
 		}
 	}
-	
+
 	private void clearExecutionRow() {
 		if (this.executionRow != null) {
 			if (this.executionRow instanceof CodeRow) {
@@ -1642,11 +1698,11 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 			} else if (this.executionRow instanceof MethodDefRow) {
 				((MethodDefRow)this.executionRow).setExecutionRow(false);
 			}
-			
+
 			this.executionRow = null;
 		}
 	}
-	
+
 	public void setExecutionRow(String methodName, Descriptor desc, Integer pc) {
 		clearExecutionRow();
 		List methods = this.classDef.getMethods();
@@ -1660,10 +1716,10 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 					mdr.setExecutionRow(true);
 					int index = this.rows.indexOf(mdr);
 					this.list.ensureIndexIsVisible(index);
-					repaint();					
+					repaint();
 					return;
 				}
-				
+
 				// Code row
 				for (EditorRow er : mdr.getCodeRows()) {
 					if (er instanceof CodeRow) {
@@ -1692,21 +1748,21 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 		throw new AssertionError("Method not found: " + methodName + " " + desc);
 
 	}
-	
+
 	private void openStackFrame(IStackFrame sf) {
 		ClassIndex ci = SystemFacade.getInstance().getClassIndex();
 		ClassLocator cl = ci.getLocator(sf.location().declaringType().name());
 		if (cl != null) {
 			try {
-				ClassFile cf = SystemFacade.getInstance().getClassFile(cl);
-				IMethod bpMethod = sf.location().method(); 
+				ClassFile cf = (ClassFile) SystemFacade.getInstance().getClassFile(cl);
+				IMethod bpMethod = sf.location().method();
 				for (net.sf.rej.java.Method method : cf.getMethods()) {
 					if (method.getName().equals(bpMethod.name()) && method.getDescriptor().getRawDesc().equals(bpMethod.signature())) {
 						Integer pc = null;
 						if (sf.location().codeIndex() != -1) {
 							pc = (int)sf.location().codeIndex();
 						}
-						
+
 						Event event = new Event(EventType.CLASS_OPEN);
 						event.setClassFile(cf);
 						event.setFile(cl.getFile());
@@ -1723,7 +1779,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 			IReferenceType rt = sf.location().declaringType();
 			String superClass = null;
 			if (!"java.lang.Object".equals(rt.name())) {
-				superClass = rt.getSuperClassName(); 
+				superClass = rt.getSuperClassName();
 			}
 			ClassFile cf = factory.createClass(rt.name(), superClass);
 			ConstantPool cp = cf.getPool();
@@ -1733,7 +1789,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 				Field fieldToAdd = fieldFactory.createField(cf, flags, cp.optionalAddUtf8(field.name()), cp.optionalAddUtf8(field.signature()));
 				cf.add(fieldToAdd);
 			}
-			
+
 			MethodFactory methodFactory = new MethodFactory();
 			for (IMethod method : rt.visibleMethods()) {
 				AccessFlags flags = new AccessFlags(method.modifiers());
@@ -1755,7 +1811,7 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 		list.add(this.classDef);
 		list.addAll(this.classDef.getFields());
 		list.addAll(this.classDef.getMethods());
-		
+
 		QuickOutlineDialog qod = new QuickOutlineDialog(MainWindow.getInstance(), list);
 		qod.invoke();
 		EditorRow er = qod.getSelected();
@@ -1775,13 +1831,13 @@ public class EditorTab extends JPanel implements Tabbable, EventObserver, Transf
 		this.sync.setOffsets(this.offsets);
 		splitSynchronize();
 	}
-	
+
 	private void splitSynchronize() {
 		if (this.sync != null && this.isOpen) {
 			this.sync.sync((EditorRow) this.list.getSelectedValue());
 		}
 	}
-	
+
 	public String getTabTitle() {
 		return "Editor";
 	}

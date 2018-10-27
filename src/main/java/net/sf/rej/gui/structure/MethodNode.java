@@ -16,19 +16,14 @@
  */
 package net.sf.rej.gui.structure;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.sf.rej.java.ClassFile;
 import net.sf.rej.java.Method;
 
-public class MethodNode extends StructureNode {
+public class MethodNode {
     private Method method;
-    private List<StructureNode> contents;
 
     public MethodNode(ClassFile cf, Method method) {
         this.method = method;
-        refresh();
     }
 
     @Override
@@ -36,22 +31,6 @@ public class MethodNode extends StructureNode {
         return this.method.getSignatureLine();
     }
 
-    @Override
-	public List getChildren() {
-        return this.contents;
-    }
-
-    public void refresh() {
-        this.contents = new ArrayList<StructureNode>();
-        this.contents.add(new MethodAccessFlagsNode(this.method));
-        this.contents.add(new MethodNameNode(this.method));
-        this.contents.add(new MethodDescriptorNode(this.method));
-        this.contents.add(new AttributesNode(this.method.getAttributes()));
-        for (StructureNode child : this.contents) {
-        	child.setParent(this);
-        }
-    }
-    
     public Method getMethod() {
     	return this.method;
     }

@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Convert float to double.
@@ -91,4 +92,10 @@ public class _f2d extends Instruction {
 		return elements;
 	}
 
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.FLOAT);
+		stack.push(StackElement.valueOf(StackElementType.DOUBLE));
+	}
 }

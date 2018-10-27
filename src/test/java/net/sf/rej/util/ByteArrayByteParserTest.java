@@ -106,7 +106,7 @@ public class ByteArrayByteParserTest extends TestCase {
 		byte[] data = {(byte)0xca, (byte)0xfe, 0x00, (byte)0xba, (byte)0xbe};
 		ByteArrayByteParser parser = new ByteArrayByteParser(data);
 		parser.setBigEndian(true);
-		long expected = 0xca;
+		int expected = 0xca;
 		expected *= 256;
 		expected += 0xfe;
 		expected *= 256;

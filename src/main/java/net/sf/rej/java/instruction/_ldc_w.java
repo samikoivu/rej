@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.java.constantpool.ConstantPoolInfo;
 import net.sf.rej.java.constantpool.FloatInfo;
@@ -113,6 +114,24 @@ public class _ldc_w extends Instruction {
 			throw new AssertionError("ldc_w points to an invalid item on the constant pool: " + cpi.getClass());
 		}
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		ConstantPoolInfo cpi = dc.getConstantPool().get(this.index);
+		if (cpi instanceof IntegerInfo) {
+			stack.push(StackElement.valueOf(StackElementType.INT));
+		} else if (cpi instanceof FloatInfo) {
+			stack.push(StackElement.valueOf(StackElementType.FLOAT));
+		} else if (cpi instanceof StringInfo) {
+			stack.push(StackElement.valueOf(StackElementType.REF));
+		} else {
+			// TODO: FIXME: lazy hack, need to debug the problem, sun classes enter here
+			// GUESS: Classes, ie. ClassInfo.. according to the spec thats not the case, but debug
+			stack.push(StackElement.valueOf(StackElementType.REF));
+			//throw new AssertionError("ldc points to an invalid item on the constant pool: " + cpi.getClass());
+		}
 	}
 
 }

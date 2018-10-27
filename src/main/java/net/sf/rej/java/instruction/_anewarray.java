@@ -18,7 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
+import net.sf.rej.java.constantpool.ClassInfo;
 import net.sf.rej.util.ByteSerializer;
 import net.sf.rej.util.ByteToolkit;
 
@@ -105,6 +107,15 @@ public class _anewarray extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("arrayref", StackElementType.REF));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		assertType(stack.pop(), StackElementType.INT); // count
+		
+		ClassInfo ci = (ClassInfo) dc.getConstantPool().get(this.index);
+		stack.push(StackElement.valueOf(ci.getName(), StackElementType.REF));
 	}
 
 }

@@ -189,7 +189,7 @@ public class ClassIndex {
 	/**
 	 * Create a cache file for the given <code>FileSet</code> and the list of
 	 * <code>ClassLocator</code> objects by writing the bytes
-	 * 'R', 'J', 'L', 'C', followed by the serialized String containing the
+	 * 'R', 'J', 'L', 'C' (magic), followed by the serialized String containing the
 	 * <code>FileSet</code> name, followed by a long value checksum of the <code>FileSet</code>
 	 * and lastly followed by the serialized <code>List</code> of <code>ClassLocator</code>
 	 * objects.
@@ -198,17 +198,19 @@ public class ClassIndex {
 	 */
     private void saveLocatorsCache(FileSet fs, List<ClassLocator> locators) {
     	try {
-    		long checksum = fs.getChecksum();
-    		String name = fs.getName();
-    		File file = FileToolkit.createNewFile(new File("."), ".locatorcache");
-    		FileOutputStream fos = new FileOutputStream(file);
-    		ObjectOutputStream oos = new ObjectOutputStream(fos);
-    		oos.write("RJLC".getBytes());
-    		oos.writeObject(name);
-    		oos.writeLong(checksum);
-    		oos.writeObject(locators);
-    		oos.flush();
-    		oos.close();
+    		if (locators.size() > 500) {
+	    		long checksum = fs.getChecksum();
+	    		String name = fs.getName();
+	    		File file = FileToolkit.createNewFile(new File("."), ".locatorcache");
+	    		FileOutputStream fos = new FileOutputStream(file);
+	    		ObjectOutputStream oos = new ObjectOutputStream(fos);
+	    		oos.write("RJLC".getBytes());
+	    		oos.writeObject(name);
+	    		oos.writeLong(checksum);
+	    		oos.writeObject(locators);
+	    		oos.flush();
+	    		oos.close();
+	    		}
     	} catch(IOException e) {
     		logger.warning("Unable to save locator cache.");
         	StringWriter sw = new StringWriter();

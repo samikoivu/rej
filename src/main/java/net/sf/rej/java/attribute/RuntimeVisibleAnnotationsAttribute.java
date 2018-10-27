@@ -39,8 +39,19 @@ public class RuntimeVisibleAnnotationsAttribute extends Attribute {
 		ByteParser parser = new ByteArrayByteParser(data);
 		parser.setBigEndian(true);
 		int numAnnotations = parser.getShortAsInt();
+		boolean invalidAdded = false;
 		for (int i=0; i < numAnnotations; i++) {
-			this.annotations.add(new Annotation(parser, this.pool));
+			Annotation ann = null;
+			try {
+				ann = new Annotation(parser, this.pool);
+			} catch (Exception e) {
+				if (invalidAdded) {
+					continue;
+				}
+				invalidAdded = true;
+				ann = new InvalidAnnotation();
+			}
+			this.annotations.add(ann);
 		}
 	}
 	

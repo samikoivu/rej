@@ -16,6 +16,7 @@
  */
 package net.sf.rej.gui.editor;
 
+
 public class CaseInsensitiveMatcher {
 	private String query;
 

@@ -27,6 +27,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import net.sf.rej.util.IOToolkit;
 
@@ -34,8 +36,8 @@ public class Archive extends FileSet {
 
     private File file = null;
     private List<String> contents = null;
-    private JarOutputStream jarOut = null;
-    private JarFile jf = null;
+    private ZipOutputStream jarOut = null;
+    private ZipFile jf = null;
 
     private Archive() {
         // do-nothing constructor
@@ -56,7 +58,7 @@ public class Archive extends FileSet {
     @Override
 	public byte[] getData(String file) throws IOException {
         byte[] data = null;
-        JarEntry je = this.jf.getJarEntry(file);
+        ZipEntry je = this.jf.getEntry(file);
         InputStream is = this.jf.getInputStream(je);
         data = IOToolkit.readStream((int) je.getSize(), is);
         is.close();
@@ -74,14 +76,8 @@ public class Archive extends FileSet {
 
     @Override
 	public InputStream getInputStream(String file) throws IOException {
-        JarEntry je = this.jf.getJarEntry(file);
+        ZipEntry je = this.jf.getEntry(file);
         return this.jf.getInputStream(je);
-    }
-
-    @Override
-	public long getLength(String file) {
-        JarEntry je = this.jf.getJarEntry(file);
-        return je.getSize();
     }
 
     public void write(String filename, byte[] data) throws IOException {
@@ -144,7 +140,7 @@ public class Archive extends FileSet {
 
     @Override
 	public void save(Modifications mods) throws IOException {
-    	File tempFile = File.createTempFile("rejava", "temp");
+    	File tempFile = File.createTempFile("rejava", "temp", this.file.getParentFile());
         saveAs(tempFile, mods);
         this.close();
         boolean success = this.file.delete();
@@ -159,7 +155,7 @@ public class Archive extends FileSet {
 
         refresh();
     }
-
+    
     @Override
 	public void saveAs(File file, Modifications mods) throws IOException {
         FileOutputStream fos = new FileOutputStream(file, false);

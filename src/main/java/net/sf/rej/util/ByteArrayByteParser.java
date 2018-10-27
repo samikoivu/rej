@@ -19,7 +19,7 @@ package net.sf.rej.util;
 /**
  * Class that wraps a byte array and offers tools for reading
  * the array.
- * 
+ *
  * @author Sami Koivu
  */
 
@@ -72,8 +72,31 @@ public class ByteArrayByteParser implements ByteParser{
 		return bytes;
 	}
 
+	public long getLong() {
+		this.pos += 8;
+		if (this.bigEndian == true) {
+			return (((long)this.data[this.pos-8] << 56) +
+                ((long)(this.data[this.pos-7] & 255) << 48) +
+                ((long)(this.data[this.pos-6] & 255) << 40) +
+                ((long)(this.data[this.pos-5] & 255) << 32) +
+                ((long)(this.data[this.pos-4] & 255) << 24) +
+                ((this.data[this.pos-3] & 255) << 16) +
+                ((this.data[this.pos-2] & 255) <<  8) +
+                ((this.data[this.pos-1] & 255) <<  0));
+		} else {
+			return (((long)this.data[this.pos-1] << 56) +
+	                ((long)(this.data[this.pos-2] & 255) << 48) +
+	                ((long)(this.data[this.pos-3] & 255) << 40) +
+	                ((long)(this.data[this.pos-4] & 255) << 32) +
+	                ((long)(this.data[this.pos-5] & 255) << 24) +
+	                ((this.data[this.pos-6] & 255) << 16) +
+	                ((this.data[this.pos-7] & 255) <<  8) +
+	                ((this.data[this.pos-8] & 255) <<  0));
+		}
+	}
+
 	public int getByteAsInt() {
-		return ByteToolkit.getByte(this.data[this.pos++]);
+		return (this.data[this.pos++] & 0xFF);
 	}
 
 	public int getShortAsInt() {
@@ -84,13 +107,11 @@ public class ByteArrayByteParser implements ByteParser{
 		return i;
 	}
 
-	// TODO: misleading name - this returns the long value of 4 next bytes in the
-	// array
-	public long getInt() {
+	public int getInt() {
 		long l = ByteToolkit.getLong(this.data, this.pos, 4, this.bigEndian);
 		this.pos += 4;
 
-		return l;
+		return (int)l;
 	}
 
 	@Deprecated
@@ -113,7 +134,34 @@ public class ByteArrayByteParser implements ByteParser{
 	}
 
 	public int peekByte() {
-		return ByteToolkit.getByte(this.data[this.pos]);
+		return (this.data[this.pos] & 0xFF);
+	}
+
+	public int getULEB128() {
+		int value = 0;
+		int shift = 0;
+		while (true) {
+			int b = getByteAsInt();
+			
+			value |= (b & 0x7F) << shift;
+			
+			shift += 7;
+			if (b < 128) break; // top bit not set, quit
+		}
+		
+		return value;
+	}
+	
+	public static void main(String[] args) {
+		// make sure the getByteasInt still works
+		// make sure leb works
+		
+	}
+
+	public int peekInt() {
+		long l = ByteToolkit.getLong(this.data, this.pos, 4, this.bigEndian);
+
+		return (int)l;
 	}
 
 }

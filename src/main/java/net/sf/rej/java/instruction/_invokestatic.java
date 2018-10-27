@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import net.sf.rej.java.Descriptor;
 import net.sf.rej.java.JavaType;
@@ -147,6 +148,40 @@ public class _invokestatic extends Instruction {
 			}
 		}
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		
+		RefInfo ri = (RefInfo) dc.getConstantPool().get(this.index);
+		Descriptor desc = ri.getDescriptor();
+
+		// pop arguments
+		for (JavaType jt : desc.getParamList()) {
+			stack.pop(); // pop and discard arg
+		}
+
+		// push return type
+		JavaType jt = desc.getReturn();
+		if (jt.getDimensionCount() > 0 || (!jt.isPrimitive())) {
+			// array or primitive are both refs
+			stack.push(StackElement.valueOf(jt.toString(), StackElementType.REF));
+		} else {
+			// primitive non-array
+			if (jt.getType().equals("long")) {
+				stack.push(StackElement.valueOf(StackElementType.LONG));
+			} else if (jt.getType().equals("float")) {
+				stack.push(StackElement.valueOf(StackElementType.FLOAT));
+			} else if (jt.getType().equals("double")) {
+				stack.push(StackElement.valueOf(StackElementType.DOUBLE));
+			} else if (jt.getType().equals("void")) {
+				// void, nothing is put on stack
+			} else {
+				// boolean, byte, short, char and int are all of type int
+				stack.push(StackElement.valueOf(StackElementType.INT));
+			}
+		}
 	}
 
 }

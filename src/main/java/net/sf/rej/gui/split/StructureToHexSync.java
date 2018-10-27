@@ -56,7 +56,8 @@ public class StructureToHexSync implements StructureSplitSynchronizer {
 		this.offsets = offsets;
 	}
 	
-	public Range getRange(StructureNode node) {
+	public Range getRange(StructureNode sn) {
+		Object node = sn.getUserObject();
 		if (node instanceof ClassFileNode) {
 			return null;
 		} else if (node instanceof MagicNode) {
@@ -87,46 +88,48 @@ public class StructureToHexSync implements StructureSplitSynchronizer {
 			MethodNode mNode = (MethodNode) node;
 			return this.offsets.get(mNode.getMethod());
 		} else if (node instanceof MethodAccessFlagsNode) {
-			Range parentRange = getRange((StructureNode)node.getParent());
+			Range parentRange = getRange((StructureNode)sn.getParent());
 			MethodAccessFlagsNode mafNode = (MethodAccessFlagsNode) node;
 			Method method = mafNode.getMethod();
 			Range afRange = method.getOffsetMap().get(Method.OffsetTag.ACCESS_FLAGS);
 			return afRange.offsetBy(parentRange.getOffset());
 		} else if (node instanceof MethodNameNode) {
-			Range parentRange = getRange((StructureNode)node.getParent());
+			Range parentRange = getRange((StructureNode)sn.getParent());
 			MethodNameNode mafNode = (MethodNameNode) node;
 			Method method = mafNode.getMethod();
 			Range afRange = method.getOffsetMap().get(Method.OffsetTag.METHOD_NAME);
 			return afRange.offsetBy(parentRange.getOffset());
 		} else if (node instanceof MethodDescriptorNode) {			
-			Range parentRange = getRange((StructureNode)node.getParent());
+			Range parentRange = getRange((StructureNode)sn.getParent());
 			MethodDescriptorNode mafNode = (MethodDescriptorNode) node;
 			Method method = mafNode.getMethod();
 			Range afRange = method.getOffsetMap().get(Method.OffsetTag.METHOD_DESCRIPTOR);
 			return afRange.offsetBy(parentRange.getOffset());
 		} else if (node instanceof AttributeNode) {
 			AttributeNode aNode = (AttributeNode) node;
-			AttributesNode an = (AttributesNode) aNode.getParent();
-			Range range = getRange(an);
-			Map<Object, Range> map = an.getAttributesObject().getOffsetMap(range.getOffset());
+			StructureNode parentSN = (StructureNode) sn.getParent();
+			AttributesNode an = (AttributesNode) parentSN.getUserObject();
+			Range range = getRange(parentSN);
+			Map<Object, Range> map = an.getAttrs().getOffsetMap(range.getOffset());
 			return map.get(aNode.getAttributeObject());
 		} else if (node instanceof AttributesNode) {
-			StructureNode parent = (StructureNode) node.getParent();
-			if (parent instanceof ClassFileNode) {
+			StructureNode parent = (StructureNode) sn.getParent();
+			Object parentUserObject = parent.getUserObject();
+			if (parentUserObject instanceof ClassFileNode) {
 				return this.offsets.get(ClassFile.OffsetTag.ATTRIBUTES);
-			} else if (parent instanceof MethodNode) {
-				MethodNode mNode = (MethodNode) parent;
+			} else if (parentUserObject instanceof MethodNode) {
+				MethodNode mNode = (MethodNode) parentUserObject;
 				Range parentRange = getRange(parent);
 				Map<Object, Range> map = mNode.getMethod().getOffsetMap();
 				return map.get(Method.OffsetTag.ATTRIBUTES).offsetBy(parentRange.getOffset());
-			} else if (parent instanceof FieldNode) {
-				FieldNode fNode = (FieldNode) parent;
+			} else if (parentUserObject instanceof FieldNode) {
+				FieldNode fNode = (FieldNode) parentUserObject;
 				Range parentRange = getRange(parent);
 				Map<Object, Range> map = fNode.getField().getOffsetMap();
 				return map.get(Field.OffsetTag.ATTRIBUTES).offsetBy(parentRange.getOffset());
-			} else if (parent instanceof AttributeNode) {
+			} else if (parentUserObject instanceof AttributeNode) {
 				// code attribute attributes
-				AttributeNode aNode = (AttributeNode) parent;
+				AttributeNode aNode = (AttributeNode) parentUserObject;
 				CodeAttribute cAttr = (CodeAttribute) aNode.getAttributeObject();
 				Range range = cAttr.getOffsetMap().get(CodeAttribute.OffsetTag.ATTRIBUTES);
 				Range parentRange = getRange(parent);

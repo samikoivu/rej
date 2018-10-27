@@ -16,6 +16,7 @@
  */
 package net.sf.rej.java.attribute;
 
+import net.sf.rej.java.ClassContext;
 import net.sf.rej.java.constantpool.ConstantPool;
 import net.sf.rej.util.ByteParser;
 import net.sf.rej.util.ByteSerializer;
@@ -32,14 +33,16 @@ public class Attribute {
 		this.nameIndex = nameIndex;
 	}
 
-	public static Attribute getAttribute(ByteParser parser, ConstantPool pool) {
+	public static Attribute getAttribute(ByteParser parser, ConstantPool pool, ClassContext cc, int accessFlags, int descriptorIndex) {
 		int nameIndex = parser.getShortAsInt();
 		int count = (int) parser.getInt();
 		byte[] info = parser.getBytes(count);
 		String name = pool.get(nameIndex).getValue();
 		if ("Code".equals(name)) {
-			Attribute attr = new CodeAttribute(nameIndex, pool);
-			attr.setPayload(info);
+			CodeAttribute attr = new CodeAttribute(nameIndex, pool);
+			attr.setMethodAccessFlags(accessFlags);
+			attr.setMethodDescriptorIndex(descriptorIndex);
+			attr.setPayload(info, cc);
 			return attr;
 		} else if ("LocalVariableTable".equals(name)) {
 			Attribute attr = new LocalVariableTableAttribute(nameIndex, pool);
@@ -128,6 +131,10 @@ public class Attribute {
 
 	public void setPayload(byte[] data) {
 		this.info = data;
+	}
+
+	public void setPayload(byte[] data, ClassContext cc) {
+		setPayload(data);
 	}
 
 }

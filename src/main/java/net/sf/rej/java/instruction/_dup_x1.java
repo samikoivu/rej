@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Duplicate the top operand stack value and insert two values down.
@@ -92,6 +93,16 @@ public class _dup_x1 extends Instruction {
 		elements.add(new StackElement("value2", StackElementType.ANY));
 		elements.add(new StackElement("value1", StackElementType.ANY));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		StackElement top = stack.pop();
+		StackElement belowTop = stack.pop();
+		stack.push(top);
+		stack.push(belowTop);
+		stack.push(top);
 	}
 
 }

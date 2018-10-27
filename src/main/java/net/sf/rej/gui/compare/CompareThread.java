@@ -28,7 +28,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import net.sf.rej.files.FileSet;
-import net.sf.rej.files.SingleFile;
+import net.sf.rej.files.NonArchiveFile;
 import net.sf.rej.gui.ProgressMonitor;
 import net.sf.rej.gui.SystemFacade;
 import net.sf.rej.util.IOToolkit;
@@ -60,7 +60,7 @@ public class CompareThread implements Runnable {
         try {
             this.root.removeAllChildren();
             
-            if (this.filesetA instanceof SingleFile && this.filesetB instanceof SingleFile && !this.listA.equals(this.listB)) {
+            if (this.filesetA instanceof NonArchiveFile && this.filesetB instanceof NonArchiveFile && !this.listA.equals(this.listB)) {
             	// Special case for comparison of two single files with nonequal names
             	FileItem fileItem = new FileItem(this.filesetA.getName(), this.filesetB.getName(), this.filesetA.getName(), this.filesetB.getName());
 				DefaultMutableTreeNode fileNode = new DefaultMutableTreeNode(fileItem);

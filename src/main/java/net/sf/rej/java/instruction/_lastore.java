@@ -18,6 +18,9 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+
+import net.sf.rej.java.RandomAccessArray;
 
 /**
  * Store into long array.
@@ -84,6 +87,15 @@ public class _lastore extends Instruction {
 		elements.add(new StackElement("index", StackElementType.INT));
 		elements.add(new StackElement("value", StackElementType.LONG));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		RandomAccessArray lvs = dc.getLocalVariables();
+		assertType(stack.pop(), StackElementType.LONG);
+		assertType(stack.pop(), StackElementType.INT);
+		assertType(stack.pop(), StackElementType.REF);
 	}
 
 }

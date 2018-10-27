@@ -19,6 +19,7 @@ package net.sf.rej.gui.editor.row;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.sf.rej.files.MethodLocator;
 import net.sf.rej.java.ClassFile;
 import net.sf.rej.java.Method;
 
@@ -29,6 +30,8 @@ public class MethodDefRow implements EditorRow {
 	private boolean openTag;
 	private boolean hasBody = false;
 	private boolean executionRow = false;
+	private MethodLocator overridden = null;
+	private MethodLocator implemented = null;
 
 	// hierarchial access to rows in editor
 	private List<LocalVariableDefRow> localVariables = new ArrayList<LocalVariableDefRow>();
@@ -69,7 +72,7 @@ public class MethodDefRow implements EditorRow {
 	public ClassFile getClassFile() {
 		return this.cf;
 	}
-	
+
 	public boolean hasBody() {
 		return this.hasBody;
 	}
@@ -77,9 +80,25 @@ public class MethodDefRow implements EditorRow {
 	public void setExecutionRow(boolean executionRow) {
 		this.executionRow = executionRow;
 	}
-	
+
 	public boolean isExecutionRow() {
 		return this.executionRow;
+	}
+
+	public void setOverridden(MethodLocator locator) {
+		this.overridden = locator;
+	}
+
+	public void setImplemented(MethodLocator locator) {
+		this.implemented = locator;
+	}
+
+	public MethodLocator getOverriden() {
+		return this.overridden;
+	}
+
+	public MethodLocator getImplemented() {
+		return this.implemented;
 	}
 
 }

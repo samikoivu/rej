@@ -18,6 +18,7 @@ package net.sf.rej.java.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Push the double constant 1.0 onto the operand stack.
@@ -82,6 +83,12 @@ public class _dconst_1 extends Instruction {
 		List<StackElement> elements = new ArrayList<StackElement>();
 		elements.add(new StackElement("1", StackElementType.DOUBLE));
 		return elements;
+	}
+
+	@Override
+	public void stackFlow(DecompilationContext dc) {
+		Stack<StackElement> stack = dc.getStack();
+		stack.push(StackElement.valueOf(StackElementType.DOUBLE));
 	}
 
 }
