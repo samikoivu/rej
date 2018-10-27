@@ -14,8 +14,8 @@ plugins {
     id 'application'
 }
 
-sourceCompatibility = '1.5'
-targetCompatibility = '1.5'
+//sourceCompatibility = '1.5'
+//targetCompatibility = '1.5'
 
 // Define the main class for the application
 mainClassName = 'net.sf.rej.gui.MainWindow'
