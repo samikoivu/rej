@@ -111,7 +111,7 @@ public class StreamByteParserTest extends TestCase {
 		ByteArrayInputStream bais = new ByteArrayInputStream(data);
 		StreamByteParser parser = new StreamByteParser(bais);
 		parser.setBigEndian(true);
-		long expected = 0xca;
+		int expected = 0xca;
 		expected *= 256;
 		expected += 0xfe;
 		expected *= 256;
