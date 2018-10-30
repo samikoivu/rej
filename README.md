@@ -5,4 +5,6 @@ Execute by running java -jar rej.jar or otherwise starting the executable jar. I
 
 Compiled for Java 1.5 and higher.
 
-Download at https://github.com/samikoivu/rej/releases/download/v0.7/rej.jar
+Download v0.7 at https://github.com/samikoivu/rej/releases/download/v0.7/rej.jar
+
+Download v0.8 at https://github.com/samikoivu/rej/releases/download/v0.8/rej.jar
